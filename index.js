@@ -1,6 +1,13 @@
 const { DisconnectReason, useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const makeWASocket = require('@whiskeysockets/baileys').default;
 const WAEvents = require('./modules/events');
+const figlet = require('figlet');
+const colors = require('./modules/utilities/colors');
+const { FunctionCommand } = require('./config');
+const fs = require('fs')
+const path = require('path');
+const Terminal = require('./modules/utilities/terminal');
+const { Worker } = require('worker_threads');
 
 async function WhatsappEvent() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
@@ -25,8 +32,12 @@ async function WhatsappEvent() {
         }
     });
 
-    sock.ev.on('messages.upsert', (m) => {
-        WAEvents.MessageEventsHandler(m, sock); // No need to stringify here
+    sock.ev.on('messages.upsert', async (m) => {
+        try {
+            await WAEvents.MessageEventsHandler(m, sock); // No need to stringify here
+        } catch (e) {
+            Terminal.ErrorLog(e);
+        }
     });
 
     sock.ev.on('message.update', (message) => {
@@ -35,5 +46,33 @@ async function WhatsappEvent() {
 
     sock.ev.on('creds.update', saveCreds);
 }
+
+figlet("MeeI-Bot", (err, data) => {
+    if (err) {
+        console.error('Something went wrong...');
+        console.dir(err);
+        return;
+    }
+    console.log(colors.FgGreen + data + colors.Reset);
+});
+
+fs.readdir("./modules/lib/", (err, files) => {
+    if (err) {
+        console.error('Error reading the directory:', err);
+        return;
+    }
+
+    // Menjalankan setiap file JavaScript
+    files.forEach(file => {
+        const filePath = "./modules/lib/" + file;
+        if (path.extname(file) === '.js') {
+            console.log('Loading ${filePath}');
+            const lib = require(filePath);
+            Object.keys(lib).forEach(key => {
+                FunctionCommand[key] = lib[key];
+            });
+        }
+    });
+});
 
 WhatsappEvent();

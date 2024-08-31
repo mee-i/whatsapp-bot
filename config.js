@@ -4,6 +4,10 @@ const Config = {
 
     ReadMessage: true
 };
+
+var FunctionCommand = {};
+
 module.exports = {
-    Config
+    Config,
+    FunctionCommand,
 };

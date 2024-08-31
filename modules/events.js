@@ -1,21 +1,18 @@
 const terminal = require('./utilities/terminal');
 const colors = require('./utilities/colors');
-const Config = require('../config');
+const { Config } = require('../config');
+const { Command } = require('./commands')
+const fs = require('fs');
 
-function isContains(json, value) {
-    let contains = false;
-    Object.keys(json).some(key => {
-        contains = typeof json[key] === 'object' ? isContains(json[key], value) : json[key] === value;
-         return contains;
-    });
-    return contains;
- }
+function hasPrefix(command, prefixes) {
+    return prefixes.some(prefix => command.startsWith(prefix));
+}
 
 async function MessageEventsHandler(data, sock) {
     if (data.messages) {
-        var lastdata = null;
         for (const datam of data?.messages) {
-            lastdata = datam;
+            if (Config.ReadMessage)
+                await sock.readMessages([datam.key]);
             if (datam.key.remoteJid.search(`@s.whatsapp.net`) !== -1)
                 await PrivateChatEventsHandler(datam, sock);
             else if (datam.key.remoteJid.search(`@g.us`) !== -1)
@@ -23,8 +20,6 @@ async function MessageEventsHandler(data, sock) {
             else
                 terminal.WarnLog(`[WARNING]: ${colors.FgWhite}No handler for ${datam?.key?.remoteJid}, skipping.`);
         }
-        if (Config.ReadMessage)
-            await sock.readMessages(lastdata.key);
     }
     //terminal.Log(JSON.stringify(data, null, 2));
 }
@@ -36,14 +31,13 @@ async function PrivateChatEventsHandler(data, sock) {
 
     if (data?.message?.extendedTextMessage) {
         const text = data?.message?.extendedTextMessage?.text;
-        Log(`${text}`);
-        if (text == "ping") {
-            const startTime = new Date(); // Start time
-            await sock.sendMessage(data?.key?.remoteJid, { text: "pong" });
-            const endTime = new Date(); // Start time
-            const timeSpent = endTime - startTime; // Time in milliseconds
-            await sock.sendMessage(data?.key?.remoteJid, { text: "response: " + timeSpent + " ms" });
-        }
+        const datafile = fs.readFileSync("./cmd-config.json");
+        const CommandOptions = JSON.parse(datafile);
+        if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
+            Log(`${colors.FgYellow}${text}`);
+            await Command(text, false, sock, data?.key);
+        } else
+            Log(`${colors.FgWhite}${text}`);
     } else if (data?.message?.imageMessage) {
         Log(`Image + ${data?.message?.imageMessage?.caption}`)
     } else if (data?.message?.documentWithCaptionMessage) {
@@ -60,7 +54,14 @@ async function GroupEventsHandler(data, sock) {
 
     // Log(data?.message);
     if (data?.message?.extendedTextMessage) {
-        Log(`${data?.message?.extendedTextMessage?.text}`);
+        const text = data?.message?.extendedTextMessage?.text;
+        const datafile = fs.readFileSync("./cmd-config.json");
+        const CommandOptions = JSON.parse(datafile);
+        if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
+            Log(`${colors.FgYellow}${text}`);
+            await Command(text, false, sock, data?.key);
+        } else
+            Log(`${colors.FgWhite}${text}`);
     } else if (data?.message?.imageMessage) {
         Log(`Image + ${data?.message?.imageMessage?.caption}`)
     } else if (data?.message?.documentWithCaptionMessage) {

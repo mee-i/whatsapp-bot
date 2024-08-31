@@ -1,0 +1,5 @@
+{
+    "COMMAND-PREFIXES": [ "/" ],
+    "PRIVATE-ONLY": [ "ping" ],
+    "GROUP-ONLY" : []
+}
