@@ -66,11 +66,31 @@ fs.readdir("./modules/lib/", (err, files) => {
     files.forEach(file => {
         const filePath = "./modules/lib/" + file;
         if (path.extname(file) === '.js') {
-            console.log('Loading ${filePath}');
+            console.log("Loading %s", filePath);
             const lib = require(filePath);
+            let MenuName = "";
+
+            // Memeriksa apakah lib.Config ada dan mengatur nama menu jika tersedia
+            if (lib.Config) {
+                if (lib.Config.menu) MenuName = lib.Config.menu;
+                delete lib.Config;
+            }
+
+            // Menginisialisasi MenuName di FunctionCommand jika belum ada
+            if (MenuName && !FunctionCommand[MenuName]) {
+                FunctionCommand[MenuName] = {};
+            }
+
+            // Iterasi melalui kunci-kunci di lib dan menetapkan mereka ke FunctionCommand
             Object.keys(lib).forEach(key => {
-                FunctionCommand[key] = lib[key];
+                if (MenuName === "") {
+                    if (!FunctionCommand[""]) FunctionCommand[""] = {}; // Pastikan kunci kosong ada
+                    FunctionCommand[""][key] = lib[key];
+                } else {
+                    FunctionCommand[MenuName][key] = lib[key];
+                }
             });
+            
         }
     });
 });

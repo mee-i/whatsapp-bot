@@ -35,7 +35,7 @@ async function PrivateChatEventsHandler(data, sock) {
         const CommandOptions = JSON.parse(datafile);
         if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
             Log(`${colors.FgYellow}${text}`);
-            await Command(text, false, sock, data?.key);
+            await Command(text, false, sock, data);
         } else
             Log(`${colors.FgWhite}${text}`);
     } else if (data?.message?.imageMessage) {
@@ -59,7 +59,7 @@ async function GroupEventsHandler(data, sock) {
         const CommandOptions = JSON.parse(datafile);
         if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
             Log(`${colors.FgYellow}${text}`);
-            await Command(text, false, sock, data?.key);
+            await Command(text, false, sock, data);
         } else
             Log(`${colors.FgWhite}${text}`);
     } else if (data?.message?.imageMessage) {
