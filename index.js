@@ -7,7 +7,6 @@ const { FunctionCommand } = require('./config');
 const fs = require('fs')
 const path = require('path');
 const Terminal = require('./modules/utilities/terminal');
-const { Worker } = require('worker_threads');
 
 async function WhatsappEvent() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
@@ -90,7 +89,7 @@ fs.readdir("./modules/lib/", (err, files) => {
                     FunctionCommand[MenuName][key] = lib[key];
                 }
             });
-            
+
         }
     });
 });
