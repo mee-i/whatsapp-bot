@@ -7,7 +7,12 @@ const Config = {
 
 var FunctionCommand = {};
 
+const Gemini = {
+    model: "gemini-1.5-pro",
+    apiKey: "" // Add apiKey here
+}
 module.exports = {
     Config,
     FunctionCommand,
+    Gemini
 };

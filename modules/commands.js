@@ -2,6 +2,7 @@ const { text } = require('figlet');
 const { FunctionCommand } = require('../config');
 const Terminal = require('./utilities/terminal')
 const fs = require('fs');
+const { Config } = require('../config')
 
 function hasPrefix(command, prefixes) {
     return prefixes.some(prefix => command.startsWith(prefix));
@@ -102,7 +103,11 @@ List Menu:
                 try {
                     await Func(sock, data?.key, ...Args);
                 } catch (error) {
-                    await sock.sendMessage(data?.key?.remoteJid, { text: `Error executing command: ${error.message}` });
+                    await sock.sendMessage(Config.Owner+"@s.whatsapp.net", { text: `[ERROR REPORT]
+Command: *${CommandOptions["COMMAND-PREFIXES"][0]}${CommandWithoutPrefix}*
+Menu: *${menuname}*
+Error: _${error.message}_
+                    ` });
                 }
             }
         }
