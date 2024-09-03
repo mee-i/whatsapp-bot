@@ -11,6 +11,8 @@ function hasPrefix(command, prefixes) {
 async function MessageEventsHandler(data, sock) {
     if (data.messages) {
         for (const datam of data?.messages) {
+            if (datam.status == "PENDING")
+                break;
             if (Config.ReadMessage)
                 await sock.readMessages([datam.key]);
             if (datam.key.remoteJid.search(`@s.whatsapp.net`) !== -1)
@@ -45,6 +47,7 @@ async function PrivateChatEventsHandler(data, sock) {
     }
 }
 async function GroupEventsHandler(data, sock) {
+    console.log(JSON.stringify(data, null, 2));
     const Metadata = await sock.groupMetadata(data?.key?.remoteJid);
     const GroupTitle = Metadata.subject;
 
@@ -52,14 +55,25 @@ async function GroupEventsHandler(data, sock) {
         terminal.Log(`[${colors.FgBlue}GC${colors.FgGreen}][${GroupTitle}][${data.pushName}]: ` + m)
     }
 
-    // Log(data?.message);
     if (data?.message?.extendedTextMessage) {
         const text = data?.message?.extendedTextMessage?.text;
         const datafile = fs.readFileSync("./cmd-config.json");
         const CommandOptions = JSON.parse(datafile);
+        if (text == "ye")
+            await sock.sendMessage(data?.key?.remoteJid, { text: "ye ye", quoted: data?.message });
         if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
             Log(`${colors.FgYellow}${text}`);
-            await Command(text, false, sock, data);
+            await Command(text, true, sock, data);
+        } else
+            Log(`${colors.FgWhite}${text}`);
+    } else if (data?.message?.conversation) {
+        const text = data?.message?.conversation;
+
+        const datafile = fs.readFileSync("./cmd-config.json");
+        const CommandOptions = JSON.parse(datafile);
+        if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
+            Log(`${colors.FgYellow}${text}`);
+            await Command(text, true, sock, data);
         } else
             Log(`${colors.FgWhite}${text}`);
     } else if (data?.message?.imageMessage) {

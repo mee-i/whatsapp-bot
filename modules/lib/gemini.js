@@ -52,7 +52,7 @@ async function gemini(sock, key, message) {
         function sendFrame() {
             parentPort.postMessage(frames[frameIndex]);
             frameIndex = (frameIndex + 1) % frames.length;
-            setTimeout(sendFrame, 500);
+            setTimeout(sendFrame, 250);
         }
 
         sendFrame();

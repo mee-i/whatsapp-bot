@@ -8,7 +8,7 @@ const Config = {
 var FunctionCommand = {};
 
 const Gemini = {
-    model: "gemini-1.5-pro",
+    model: "gemini-1.5-flash",
     apiKey: "" // Add apiKey here
 }
 module.exports = {
