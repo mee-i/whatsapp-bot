@@ -2,7 +2,8 @@ const { text } = require('figlet');
 const { FunctionCommand } = require('../config');
 const Terminal = require('./utilities/terminal')
 const fs = require('fs');
-const { Config } = require('../config')
+const { Config } = require('../config');
+const { geminiNoWorker } = require('./lib/gemini');
 
 function hasPrefix(command, prefixes) {
     return prefixes.some(prefix => command.startsWith(prefix));
@@ -52,6 +53,22 @@ async function Command(command, isGroup, sock, data) {
 
     let Args = command.split(" ");
     let CommandWithoutPrefix = getCommandWithoutPrefix(Args[0], CommandOptions["COMMAND-PREFIXES"]);
+
+    if (CommandWithoutPrefix == "MakeMeAI" && Config.Owner == data?.key?.participant.replace("@s.whatsapp.net", ""))
+    {
+        Config.AIMessage.push(data?.key?.remoteJid);
+        await sock.sendMessage(data?.key?.remoteJid, {text: "AI message *enabled* in this chat!"});
+    }
+
+    if (CommandWithoutPrefix == "StopAI" && Config.Owner == data?.key?.participant.replace("@s.whatsapp.net", ""))
+        {
+            if (Config.AIMessage.includes(data?.key?.remoteJid))
+            {
+                Config.AIMessage = Config.AIMessage.filter(item => item !== data?.key?.remoteJid);
+                await sock.sendMessage(data?.key?.remoteJid, {text: "AI message *disabled* in this chat!"});
+            } else
+                await sock.sendMessage(data?.key?.remoteJid, {text: "This chat already *disabled*!"});
+        }
 
     if (CommandWithoutPrefix == "menu" || CommandWithoutPrefix == "help")
     {

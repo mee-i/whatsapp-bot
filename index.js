@@ -68,10 +68,12 @@ fs.readdir("./modules/lib/", (err, files) => {
             console.log("Loading %s", filePath);
             const lib = require(filePath);
             let MenuName = "";
+            let disableMenu = [];
 
             // Memeriksa apakah lib.Config ada dan mengatur nama menu jika tersedia
             if (lib.Config) {
                 if (lib.Config.menu) MenuName = lib.Config.menu;
+                if (lib.Config.disableMenu) disableMenu = lib.Config.disableMenu;
                 delete lib.Config;
             }
 
@@ -82,12 +84,14 @@ fs.readdir("./modules/lib/", (err, files) => {
 
             // Iterasi melalui kunci-kunci di lib dan menetapkan mereka ke FunctionCommand
             Object.keys(lib).forEach(key => {
-                if (MenuName === "") {
-                    if (!FunctionCommand[""]) FunctionCommand[""] = {}; // Pastikan kunci kosong ada
-                    FunctionCommand[""][key] = lib[key];
-                } else {
-                    FunctionCommand[MenuName][key] = lib[key];
-                }
+                if (!disableMenu.includes(key)) {
+                    if (MenuName === "") {
+                        if (!FunctionCommand[""]) FunctionCommand[""] = {}; // Pastikan kunci kosong ada
+                            FunctionCommand[""][key] = lib[key];
+                    } else {
+                            FunctionCommand[MenuName][key] = lib[key];
+                    }
+                };
             });
 
         }

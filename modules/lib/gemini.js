@@ -52,7 +52,7 @@ async function gemini(sock, key, message) {
         function sendFrame() {
             parentPort.postMessage(frames[frameIndex]);
             frameIndex = (frameIndex + 1) % frames.length;
-            setTimeout(sendFrame, 250);
+            setTimeout(sendFrame, 500);
         }
 
         sendFrame();
@@ -124,6 +124,39 @@ async function gemini(sock, key, message) {
 	});
 }
 
+async function geminiNoWorker(sock, key, message) {
+	const Database = fs.readFileSync("./database/ai-database.json");
+
+	const AIDatabase = JSON.parse(Database);
+
+	if (!AIDatabase["gemini"]) {
+		AIDatabase["gemini"] = {
+			model,
+			userChat: {},
+		};
+	}
+	if (!AIDatabase["gemini"]["userChat"][key?.remoteJid])
+		AIDatabase["gemini"]["userChat"][key?.remoteJid] = [];
+
+	const chatSession = model.startChat({
+		generationConfig,
+		safetySettings,
+		history: AIDatabase["gemini"]["userChat"][key?.remoteJid],
+	});
+
+	const result = await chatSession.sendMessage(message);
+
+	fs.writeFileSync(
+		"./database/ai-database.json",
+		JSON.stringify(AIDatabase, null, 4),
+		"utf8"
+	);
+
+	await sock.sendMessage(key?.remoteJid, {
+		text: result.response.text()
+	});
+}
+
 async function newchat(sock, key) {
 	await sock.sendMessage(key?.remoteJid, { text: "Generating new chat..." });
 	const Database = fs.readFileSync("./database/ai-database.json");
@@ -151,7 +184,9 @@ async function newchat(sock, key) {
 module.exports = {
 	newchat,
 	gemini,
+	geminiNoWorker,
 	Config: {
 		menu: "AI",
+		disableMenu: [ "geminiNoWorker" ]
 	},
 };

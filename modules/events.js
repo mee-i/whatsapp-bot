@@ -3,6 +3,7 @@ const colors = require('./utilities/colors');
 const { Config } = require('../config');
 const { Command } = require('./commands')
 const fs = require('fs');
+const { geminiNoWorker }= require('./lib/gemini')
 
 function hasPrefix(command, prefixes) {
     return prefixes.some(prefix => command.startsWith(prefix));
@@ -48,24 +49,33 @@ async function PrivateChatEventsHandler(data, sock) {
 }
 async function GroupEventsHandler(data, sock) {
     console.log(JSON.stringify(data, null, 2));
+    let isMe = false;
+    if (data?.participant) 
+    {
+        if (data?.participant.includes(Config.CurrentNumber))
+            isMe = true;
+    }
     const Metadata = await sock.groupMetadata(data?.key?.remoteJid);
     const GroupTitle = Metadata.subject;
 
     const Log = (m) => { 
-        terminal.Log(`[${colors.FgBlue}GC${colors.FgGreen}][${GroupTitle}][${data.pushName}]: ` + m)
+        terminal.Log(`[${colors.FgBlue}GC${colors.FgGreen}][${GroupTitle}][${data?.pushName}]: ` + m)
     }
 
     if (data?.message?.extendedTextMessage) {
         const text = data?.message?.extendedTextMessage?.text;
         const datafile = fs.readFileSync("./cmd-config.json");
         const CommandOptions = JSON.parse(datafile);
-        if (text == "ye")
-            await sock.sendMessage(data?.key?.remoteJid, { text: "ye ye", quoted: data?.message });
+
         if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
             Log(`${colors.FgYellow}${text}`);
             await Command(text, true, sock, data);
-        } else
-            Log(`${colors.FgWhite}${text}`);
+        } else {
+            Log(`Extended Message: ${colors.FgWhite}${text}`);
+            if (Config.AIMessage.includes(data?.key?.remoteJid) && !isMe) {
+                geminiNoWorker(sock, data?.key, text)
+            }
+        }
     } else if (data?.message?.conversation) {
         const text = data?.message?.conversation;
 
@@ -74,8 +84,12 @@ async function GroupEventsHandler(data, sock) {
         if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
             Log(`${colors.FgYellow}${text}`);
             await Command(text, true, sock, data);
-        } else
-            Log(`${colors.FgWhite}${text}`);
+        } else {
+            Log(`From Conversation: ${colors.FgWhite}${text}`);
+            if (Config.AIMessage.includes(data?.key?.remoteJid) && !isMe) {
+                geminiNoWorker(sock, data?.key, text)
+            }
+        }
     } else if (data?.message?.imageMessage) {
         Log(`Image + ${data?.message?.imageMessage?.caption}`)
     } else if (data?.message?.documentWithCaptionMessage) {
