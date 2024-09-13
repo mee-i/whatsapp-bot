@@ -27,13 +27,22 @@ async function MessageEventsHandler(data, sock) {
     //terminal.Log(JSON.stringify(data, null, 2));
 }
 async function PrivateChatEventsHandler(data, sock) {
-    //  terminal.WarnLog(JSON.stringify(data, null, 2));
+    terminal.WarnLog(JSON.stringify(data, null, 2));
     const Log = (m) => { 
         terminal.Log(`[${colors.FgCyan}PC${colors.FgGreen}][${data?.key?.remoteJid}][${data.pushName}]: ` + m);
     }
 
     if (data?.message?.extendedTextMessage) {
         const text = data?.message?.extendedTextMessage?.text;
+        const datafile = fs.readFileSync("./cmd-config.json");
+        const CommandOptions = JSON.parse(datafile);
+        if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
+            Log(`${colors.FgYellow}${text}`);
+            await Command(text, false, sock, data);
+        } else
+            Log(`${colors.FgWhite}${text}`);
+    } else if (data?.message?.conversation) {
+        const text = data?.message?.conversation;
         const datafile = fs.readFileSync("./cmd-config.json");
         const CommandOptions = JSON.parse(datafile);
         if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
@@ -73,7 +82,14 @@ async function GroupEventsHandler(data, sock) {
         } else {
             Log(`Extended Message: ${colors.FgWhite}${text}`);
             if (Config.AIMessage.includes(data?.key?.remoteJid) && !isMe) {
-                geminiNoWorker(sock, data?.key, text)
+                try {
+                    geminiNoWorker(sock, data?.key, text);
+                } catch (error) {
+                    await sock.sendMessage(Config.Owner+"@s.whatsapp.net", { text: `[ERROR REPORT]
+Command: *${CommandOptions["COMMAND-PREFIXES"][0]}${CommandWithoutPrefix}*
+Menu: *${menuname}*
+Error: _${error.message}_` });
+                }
             }
         }
     } else if (data?.message?.conversation) {
@@ -87,7 +103,14 @@ async function GroupEventsHandler(data, sock) {
         } else {
             Log(`From Conversation: ${colors.FgWhite}${text}`);
             if (Config.AIMessage.includes(data?.key?.remoteJid) && !isMe) {
-                geminiNoWorker(sock, data?.key, text)
+                try {
+                    geminiNoWorker(sock, data?.key, text);
+                } catch (error) {
+                    await sock.sendMessage(Config.Owner+"@s.whatsapp.net", { text: `[ERROR REPORT]
+Command: *${CommandOptions["COMMAND-PREFIXES"][0]}${CommandWithoutPrefix}*
+Menu: *${menuname}*
+Error: _${error.message}_` });
+                }
             }
         }
     } else if (data?.message?.imageMessage) {

@@ -11,7 +11,7 @@ var FunctionCommand = {};
 
 const Gemini = {
     model: "gemini-1.5-flash",
-    apiKey: "AIzaSyD4fRqRN2WUQOfasZtSvfusXZxvPhLaowQ" // Add apiKey here
+    apiKey: "" // Add apiKey here
 }
 module.exports = {
     Config,
