@@ -1,0 +1,21 @@
+{
+    "MessageNotification": [
+        "120363321622641873@g.us"
+    ],
+    "Earthquake": [
+        {
+            "Tanggal": "18 Sep 2024",
+            "Jam": "14:56:03 WIB",
+            "DateTime": "2024-09-18T07:56:03+00:00",
+            "Coordinates": "-7.21,107.66",
+            "Lintang": "7.21 LS",
+            "Bujur": "107.66 BT",
+            "Magnitude": "3.1",
+            "Kedalaman": "5 km",
+            "Wilayah": "Pusat gempa berada di darat 25 km Tenggara Kab. Bandung",
+            "Potensi": "Gempa ini dirasakan untuk diteruskan pada masyarakat",
+            "Dirasakan": "II Kertasari, II Pasirwangi, II Samarang",
+            "Shakemap": "20240918145603.mmi.jpg"
+        }
+    ]
+}

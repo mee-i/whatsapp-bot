@@ -9,6 +9,8 @@ const Config = {
 
 var FunctionCommand = {};
 
+const EarthquakeAPI = "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json";
+
 const Gemini = {
     model: "gemini-1.5-flash",
     apiKey: "" // Add apiKey here
@@ -16,5 +18,6 @@ const Gemini = {
 module.exports = {
     Config,
     FunctionCommand,
-    Gemini
+    Gemini,
+    EarthquakeAPI
 };

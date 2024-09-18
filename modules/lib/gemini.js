@@ -100,7 +100,7 @@ async function gemini(sock, key, message) {
 		history: AIDatabase["gemini"]["userChat"][key?.remoteJid],
 	});
 
-	console.log(JSON.stringify(chatSession, null, 2));
+	//console.log(JSON.stringify(chatSession, null, 2));
 
 	const result = await chatSession.sendMessage(message);
 	worker

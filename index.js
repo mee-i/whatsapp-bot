@@ -3,10 +3,17 @@ const makeWASocket = require('@whiskeysockets/baileys').default;
 const WAEvents = require('./modules/events');
 const figlet = require('figlet');
 const colors = require('./modules/utilities/colors');
-const { FunctionCommand } = require('./config');
+const { FunctionCommand, Config } = require('./config');
 const fs = require('fs')
 const path = require('path');
 const Terminal = require('./modules/utilities/terminal');
+const { Worker } = require("worker_threads")
+const https = require("https");
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 
 async function WhatsappEvent() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
@@ -14,6 +21,83 @@ async function WhatsappEvent() {
         // can provide additional config here
         printQRInTerminal: true,
         auth: state
+    });
+
+    const worker = new Worker("./modules/earthquake-worker.js");
+
+    worker.on("message", async (data) => {
+        if (!data?.Infogempa?.gempa) {
+            console.log("NoGempaFound");
+            return;
+        }
+
+        const Database = fs.readFileSync("./database/earthquake.json");
+
+        const EarthquakeDB = JSON.parse(Database);
+        if (!EarthquakeDB["MessageNotification"])
+            EarthquakeDB["MessageNotification"] = [];
+        
+        if (!EarthquakeDB["Earthquake"])
+            EarthquakeDB["Earthquake"] = [];
+
+        const isExist = EarthquakeDB["Earthquake"].find(quake => quake.DateTime === data?.Infogempa?.gempa?.DateTime);
+
+        if (!isExist) {
+            const gempa = data?.Infogempa?.gempa;
+            const ShakemapURL = `https://data.bmkg.go.id/DataMKG/TEWS/${gempa?.Shakemap}`;
+
+            const res = await fetch(ShakemapURL);
+            if (!res.ok) await sock.sendMessage(`${Config.Owner}@s.whatsapp.net`,`Failed to fetch image: ${res.statusText}`);
+            const file = fs.createWriteStream(`./database/Shakemap/${gempa?.Shakemap}`);
+            let isDownloadComplete = false;
+            const request = https.get(ShakemapURL, async function(response) {
+                response.pipe(file);
+
+                // after download completed close filestream
+                file.on("finish", async () => {
+                    file.close();
+                    isDownloadComplete = true;
+                    // await sock.sendMessage(Config.Owner + "@s.whatsapp.net", {text: "Downloaded"});
+                });
+            });
+
+            if (!EarthquakeDB["MessageNotification"])
+                EarthquakeDB["MessageNotification"] = [];
+            else {
+                EarthquakeDB["MessageNotification"].forEach(async element => {
+                    let EarthquakeMessage = `**WARNING!**
+--> Notifikasi Gempa <--
+Jam: ${gempa?.Jam}
+Koordinat: ${gempa?.Coordinates}
+Magnitude: ${gempa?.Magnitude}
+Kedalaman: ${gempa?.Kedalaman}
+Wilayah: ${gempa?.Wilayah}
+Potensi: ${gempa?.Potensi}
+Dirasakan: ${gempa?.Dirasakan}
+                    `;
+                    await new Promise((resolve) => {
+                        const checkInterval = setInterval(() => {
+                            if (isDownloadComplete) {
+                                clearInterval(checkInterval); // Stop interval saat boolean true
+                                resolve(); // Lanjutkan proses setelah boolean true
+                            }
+                        }, 50);
+                    });
+                    await sock.sendMessage(element, {image: {url: `./database/Shakemap/${gempa?.Shakemap}`}, caption: EarthquakeMessage});
+                });
+            }
+            EarthquakeDB["Earthquake"].push(data?.Infogempa?.gempa);
+        }
+        fs.writeFileSync(
+            "./database/earthquake.json",
+            JSON.stringify(EarthquakeDB, null, 4),
+            "utf8"
+        );
+    });
+
+    // Handle errors
+    worker.on("error", (e) => {
+        console.error("Worker error:", e);
     });
     
     sock.ev.on('connection.update', async (update) => {
