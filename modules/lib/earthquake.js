@@ -1,4 +1,3 @@
-const { Config } = require("./gemini");
 const fs = require("fs");
 
 async function notifgempa(sock, key) {

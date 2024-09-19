@@ -110,6 +110,12 @@ Dirasakan: ${gempa?.Dirasakan}
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
             if (shouldReconnect) {
                 console.log('Reconnecting...');
+                worker.terminate().then(() => {
+                        // console.log("\nLoading complete");
+                })
+                .catch((error) => {
+                        console.error("Error stopping worker:", error);
+                });
                 await WhatsappEvent(); // Ensure to wait for reconnection
             }
         }
