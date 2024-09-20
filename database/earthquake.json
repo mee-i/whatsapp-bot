@@ -1,7 +1,5 @@
 {
-    "MessageNotification": [
-        "120363321622641873@g.us"
-    ],
+    "MessageNotification": [],
     "Earthquake": [
         {
             "Tanggal": "18 Sep 2024",
@@ -16,6 +14,48 @@
             "Potensi": "Gempa ini dirasakan untuk diteruskan pada masyarakat",
             "Dirasakan": "II Kertasari, II Pasirwangi, II Samarang",
             "Shakemap": "20240918145603.mmi.jpg"
+        },
+        {
+            "Tanggal": "19 Sep 2024",
+            "Jam": "14:45:33 WIB",
+            "DateTime": "2024-09-19T07:45:33+00:00",
+            "Coordinates": "2.23,128.68",
+            "Lintang": "2.23 LU",
+            "Bujur": "128.68 BT",
+            "Magnitude": "5.6",
+            "Kedalaman": "10 km",
+            "Wilayah": "47 km TimurLaut DARUBA-MALUT",
+            "Potensi": "Tidak berpotensi tsunami",
+            "Dirasakan": "-",
+            "Shakemap": "20240919144822.mmi.jpg"
+        },
+        {
+            "Tanggal": "19 Sep 2024",
+            "Jam": "23:14:17 WIB",
+            "DateTime": "2024-09-19T16:14:17+00:00",
+            "Coordinates": "0.80,98.68",
+            "Lintang": "0.80 LU",
+            "Bujur": "98.68 BT",
+            "Magnitude": "5.3",
+            "Kedalaman": "93 km",
+            "Wilayah": "91 km BaratDaya PADANGSIDEMPUAN-SUMUT",
+            "Potensi": "Tidak berpotensi tsunami",
+            "Dirasakan": "-",
+            "Shakemap": "20240919231648.mmi.jpg"
+        },
+        {
+            "Tanggal": "19 Sep 2024",
+            "Jam": "23:36:50 WIB",
+            "DateTime": "2024-09-19T16:36:50+00:00",
+            "Coordinates": "1.28,118.44",
+            "Lintang": "1.28 LU",
+            "Bujur": "118.44 BT",
+            "Magnitude": "3.8",
+            "Kedalaman": "15 km",
+            "Wilayah": "Pusat gempa berada di darat 146 Km tenggara Berau",
+            "Potensi": "Gempa ini dirasakan untuk diteruskan pada masyarakat",
+            "Dirasakan": "III-IV Kecamatan Batu Putih",
+            "Shakemap": "20240919233650.mmi.jpg"
         }
     ]
 }

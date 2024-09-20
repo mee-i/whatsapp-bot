@@ -1,3 +1,6 @@
 node_modules/
 auth_info_baileys/
 database/ai-database.json
+start.sh
+bot.log
+
