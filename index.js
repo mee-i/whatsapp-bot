@@ -36,7 +36,7 @@ async function WhatsappEvent() {
         const EarthquakeDB = JSON.parse(Database);
         if (!EarthquakeDB["MessageNotification"])
             EarthquakeDB["MessageNotification"] = [];
-        
+
         if (!EarthquakeDB["Earthquake"])
             EarthquakeDB["Earthquake"] = [];
 
@@ -65,25 +65,30 @@ async function WhatsappEvent() {
                 EarthquakeDB["MessageNotification"] = [];
             else {
                 EarthquakeDB["MessageNotification"].forEach(async element => {
-                    let EarthquakeMessage = `**WARNING!**
+                    const InArea = gempa?.Dirasakan.toLowerCase().isContains(element?.wilayah.toLowerCase());
+                    if (InArea) {
+                        let EarthquakeMessage = `**WARNING!**
 --> Notifikasi Gempa <--
 Jam: ${gempa?.Jam}
 Koordinat: ${gempa?.Coordinates}
 Magnitude: ${gempa?.Magnitude}
-Kedalaman: ${gempa?.Kedalaman}
+sKedalaman: ${gempa?.Kedalaman}
 Wilayah: ${gempa?.Wilayah}
 Potensi: ${gempa?.Potensi}
 Dirasakan: ${gempa?.Dirasakan}
-                    `;
-                    await new Promise((resolve) => {
-                        const checkInterval = setInterval(() => {
-                            if (isDownloadComplete) {
-                                clearInterval(checkInterval); // Stop interval saat boolean true
-                                resolve(); // Lanjutkan proses setelah boolean true
-                            }
-                        }, 50);
-                    });
-                    await sock.sendMessage(element, {image: {url: `./database/Shakemap/${gempa?.Shakemap}`}, caption: EarthquakeMessage});
+
+www.bmkg.go.id
+                        `;
+                        await new Promise((resolve) => {
+                            const checkInterval = setInterval(() => {
+                                if (isDownloadComplete) {
+                                    clearInterval(checkInterval); // Stop interval saat boolean true
+                                    resolve(); // Lanjutkan proses setelah boolean true
+                                }
+                            }, 50);
+                        });
+                        await sock.sendMessage(element.id, {image: {url: `./database/Shakemap/${gempa?.Shakemap}`}, caption: EarthquakeMessage});
+                    }
                 });
             }
             EarthquakeDB["Earthquake"].push(data?.Infogempa?.gempa);
