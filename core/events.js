@@ -1,10 +1,11 @@
-const terminal = require('./utilities/terminal');
-const colors = require('./utilities/colors');
-const { Config } = require('../config');
-const { Command } = require('./commands')
-const fs = require('fs');
-const { geminiNoWorker }= require('./lib/gemini')
+const terminal = require('../utilities/terminal.js');
+const colors = require('../utilities/colors.js');
 
+const { Command } = require('./commands.js')
+const store = require('./memory-store.js');
+
+const fs = require('node:fs');
+const { Config } = require('../config.js');
 function hasPrefix(command, prefixes) {
     return prefixes.some(prefix => command.startsWith(prefix));
 }
@@ -27,11 +28,10 @@ async function MessageEventsHandler(data, sock) {
     //terminal.Log(JSON.stringify(data, null, 2));
 }
 async function PrivateChatEventsHandler(data, sock) {
-    terminal.WarnLog(JSON.stringify(data, null, 2));
+    // terminal.WarnLog(JSON.stringify(data, null, 2));
     const Log = (m) => { 
         terminal.Log(`[${colors.FgCyan}PC${colors.FgGreen}][${data?.key?.remoteJid}][${data.pushName}]: ` + m);
     }
-
     if (data?.message?.extendedTextMessage) {
         const text = data?.message?.extendedTextMessage?.text;
         const datafile = fs.readFileSync("./cmd-config.json");
@@ -57,15 +57,9 @@ async function PrivateChatEventsHandler(data, sock) {
     }
 }
 async function GroupEventsHandler(data, sock) {
-    console.log(JSON.stringify(data, null, 2));
-    let isMe = false;
-    if (data?.participant) 
-    {
-        if (data?.participant.includes(Config.CurrentNumber))
-            isMe = true;
-    }
-    const Metadata = await sock.groupMetadata(data?.key?.remoteJid);
-    const GroupTitle = Metadata.subject;
+    // console.log(JSON.stringify(data, null, 2));
+    const Metadata = await store.fetchGroupMetadata(data?.key?.remoteJid, sock);
+    const GroupTitle = Metadata?.subject;
 
     const Log = (m) => { 
         terminal.Log(`[${colors.FgBlue}GC${colors.FgGreen}][${GroupTitle}][${data?.pushName}]: ` + m)
@@ -81,16 +75,6 @@ async function GroupEventsHandler(data, sock) {
             await Command(text, true, sock, data);
         } else {
             Log(`Extended Message: ${colors.FgWhite}${text}`);
-            if (Config.AIMessage.includes(data?.key?.remoteJid) && !isMe) {
-                try {
-                    geminiNoWorker(sock, data?.key, text);
-                } catch (error) {
-                    await sock.sendMessage(Config.Owner+"@s.whatsapp.net", { text: `[ERROR REPORT]
-Command: *${CommandOptions["COMMAND-PREFIXES"][0]}${CommandWithoutPrefix}*
-Menu: *${menuname}*
-Error: _${error.message}_` });
-                }
-            }
         }
     } else if (data?.message?.conversation) {
         const text = data?.message?.conversation;
@@ -102,16 +86,6 @@ Error: _${error.message}_` });
             await Command(text, true, sock, data);
         } else {
             Log(`From Conversation: ${colors.FgWhite}${text}`);
-            if (Config.AIMessage.includes(data?.key?.remoteJid) && !isMe) {
-                try {
-                    geminiNoWorker(sock, data?.key, text);
-                } catch (error) {
-                    await sock.sendMessage(Config.Owner+"@s.whatsapp.net", { text: `[ERROR REPORT]
-Command: *${CommandOptions["COMMAND-PREFIXES"][0]}${CommandWithoutPrefix}*
-Menu: *${menuname}*
-Error: _${error.message}_` });
-                }
-            }
         }
     } else if (data?.message?.imageMessage) {
         Log(`Image + ${data?.message?.imageMessage?.caption}`)

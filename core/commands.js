@@ -1,9 +1,9 @@
-const { text } = require('figlet');
-const { FunctionCommand } = require('../config');
-const Terminal = require('./utilities/terminal')
-const fs = require('fs');
-const { Config } = require('../config');
-const { geminiNoWorker } = require('./lib/gemini');
+// const { text } = require('figlet');
+const { FunctionCommand } = require('../config.js');
+// const Terminal = require('./terminal.js')
+const fs = require('node:fs');
+const { Config } = require('../config.js');
+// const { geminiNoWorker } = require('../modules/gemini.js');
 
 function hasPrefix(command, prefixes) {
     return prefixes.some(prefix => command.startsWith(prefix));
@@ -40,7 +40,7 @@ async function Command(command, isGroup, sock, data) {
         return false;
     
     let Args = command.split(" ");
-    let CommandWithoutPrefix = getCommandWithoutPrefix(Args[0], CommandOptions["COMMAND-PREFIXES"]);
+    const CommandWithoutPrefix = getCommandWithoutPrefix(Args[0], CommandOptions["COMMAND-PREFIXES"]);
 
     if (CommandOptions["GROUP-ONLY"].includes(CommandWithoutPrefix) && isGroup == false) {
         await sock.sendMessage(data?.key?.remoteJid, { text: 'Sorry this command is only for group chat!' });
@@ -122,6 +122,7 @@ List Menu:
 Command: *${CommandOptions["COMMAND-PREFIXES"][0]}${CommandWithoutPrefix}*
 Menu: *${menuname}*
 Error: _${error.message}_
+Stack Trace: _${error.stack}_
                     ` });
                 }
             }

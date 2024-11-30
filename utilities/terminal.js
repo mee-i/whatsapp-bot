@@ -1,4 +1,4 @@
-const colors = require('./colors');
+const colors = require('./colors.js');
 
 function Log(message) {
     console.log(`${colors.FgGreen}%s${colors.Reset}`, message);

@@ -3,4 +3,5 @@ auth_info_baileys/
 database/ai-database.json
 start.sh
 bot.log
-
+baileys_store.json
+.env

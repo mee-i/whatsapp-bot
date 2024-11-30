@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require("node:fs");
 
 async function notifgempa(sock, key, wilayah) {
     const Database = fs.readFileSync("./database/earthquake.json");

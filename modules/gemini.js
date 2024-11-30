@@ -9,9 +9,9 @@ const {
 	HarmCategory,
 	HarmBlockThreshold,
 } = require("@google/generative-ai");
-const { Worker } = require("worker_threads");
-const fs = require("fs");
-const Config = require("../../config");
+const { Worker } = require("node:worker_threads");
+const fs = require("node:fs");
+const Config = require("../config.js");
 
 const apiKey = Config.Gemini.apiKey;
 const genAI = new GoogleGenerativeAI(apiKey);
@@ -28,6 +28,8 @@ const generationConfig = {
 	responseMimeType: "text/plain",
 };
 
+function sleep (ms) { return new Promise(resolve => setTimeout(resolve, ms)) };
+
 const safetySettings = [
 	{
 		category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -41,45 +43,32 @@ const safetySettings = [
 
 async function gemini(sock, key, message) {
 	const msg = await sock.sendMessage(key?.remoteJid, { text: "|" });
-	let loadingFrame = 0;
-	const worker = new Worker(
-		`
-        const { parentPort } = require('worker_threads');
+	// TODO: Fix this loading animation
+	// let loadingFrame = 0;
+	// const worker = new Worker("./utilities/loading-worker.js", {type: "module", });
 
-        const frames = ['/', '—', '\\\\', '|'];
-        let frameIndex = 0;
+	// worker.on("message", async (r) => {
+	// 	if (loadingFrame >= 20)
+	// 		worker
+	// 		.terminate()
+	// 		.then(() => {
+	// 			setTimeout(async () => {
+	// 				await sock.sendMessage(key?.remoteJid, { text: "Failed to generate AI message! send report to owner! /bug <message>", edit: msg.key });
+	// 			}, 500);
+	// 		})
+	// 		.catch((error) => {
+	// 			console.error("Error stopping worker:", error);
+	// 		});
+	// 	await sock.sendMessage(key?.remoteJid, { text: r, edit: msg.key });
+	// 	loadingFrame += 1;
+	// });
 
-        function sendFrame() {
-            parentPort.postMessage(frames[frameIndex]);
-            frameIndex = (frameIndex + 1) % frames.length;
-            setTimeout(sendFrame, 500);
-        }
+	// // Handle errors
+	// worker.on("error", (e) => {
+	// 	console.error("Worker error:", e);
+	// });
 
-        sendFrame();
-    `,
-		{ eval: true }
-	);
-
-	worker.on("message", async (r) => {
-		if (loadingFrame >= 20)
-			worker
-			.terminate()
-			.then(() => {
-				setTimeout(async () => {
-					await sock.sendMessage(key?.remoteJid, { text: "Failed to generate AI message! send report to owner! /bug <message>", edit: msg.key });
-				}, 500);
-			})
-			.catch((error) => {
-				console.error("Error stopping worker:", error);
-			});
-		await sock.sendMessage(key?.remoteJid, { text: r, edit: msg.key });
-		loadingFrame += 1;
-	});
-
-	// Handle errors
-	worker.on("error", (e) => {
-		console.error("Worker error:", e);
-	});
+	// await sleep(5000);
 
 	const Database = fs.readFileSync("./database/ai-database.json");
 
@@ -103,14 +92,15 @@ async function gemini(sock, key, message) {
 	//console.log(JSON.stringify(chatSession, null, 2));
 
 	const result = await chatSession.sendMessage(message);
-	worker
-		.terminate()
-		.then(() => {
-			// console.log("\nLoading complete");
-		})
-		.catch((error) => {
-			console.error("Error stopping worker:", error);
-		});
+	//TODO: Fix this worker
+	// worker
+	// 	.terminate()
+	// 	.then(() => {
+	// 		// console.log("\nLoading complete");
+	// 	})
+	// 	.catch((error) => {
+	// 		console.error("Error stopping worker:", error);
+	// 	});
 
 	fs.writeFileSync(
 		"./database/ai-database.json",
@@ -124,7 +114,7 @@ async function gemini(sock, key, message) {
 	});
 }
 
-async function geminiNoWorker(sock, key, message) {
+async function geminiNoLoading(sock, key, message) {
 	const Database = fs.readFileSync("./database/ai-database.json");
 
 	const AIDatabase = JSON.parse(Database);
@@ -184,7 +174,7 @@ async function newchat(sock, key) {
 module.exports = {
 	newchat,
 	gemini,
-	geminiNoWorker,
+	geminiNoLoading,
 	Config: {
 		menu: "AI",
 		disableMenu: [ "geminiNoWorker" ]
