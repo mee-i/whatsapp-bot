@@ -7,7 +7,7 @@ const { FunctionCommand, Config } = require('./config');
 const fs = require('fs')
 const path = require('path');
 const Terminal = require('./modules/utilities/terminal');
-const { Worker } = require("worker_threads")
+const { Worker } = require("worker_threads");
 const https = require("https");
 
 function sleep(ms) {
@@ -65,8 +65,9 @@ async function WhatsappEvent() {
                 EarthquakeDB["MessageNotification"] = [];
             else {
                 EarthquakeDB["MessageNotification"].forEach(async element => {
-                    const InArea = gempa?.Dirasakan.toLowerCase().isContains(element?.wilayah.toLowerCase());
-                    if (InArea) {
+                    //const InArea = gempa?.Dirasakan.toLowerCase().includes(element?.wilayah.toLowerCase());
+                    const InArea = gempa?.Dirasakan.toLowerCase().match(new RegExp("(\\W|^)" + (element?.wilayah.toLowerCase() ?? "") + "(\\W|$)", "i"));
+                    if (InArea !== null || (element?.wilayah == "*")) {
                         let EarthquakeMessage = `**WARNING!**
 --> Notifikasi Gempa <--
 Jam: ${gempa?.Jam}

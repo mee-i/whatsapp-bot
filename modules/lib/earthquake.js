@@ -6,7 +6,7 @@ async function notifgempa(sock, key, wilayah) {
     if (!EarthquakeDB["MessageNotification"])
         EarthquakeDB["MessageNotification"] = [];
 
-    const Exist = EarthquakeDB["MessageNotification"].find(mn => mn.id === key?.remoteJid);
+    const Exists = EarthquakeDB["MessageNotification"].find(mn => mn.id === key?.remoteJid);
 
     if (!Exists) {
         EarthquakeDB["MessageNotification"].push({id: key?.remoteJid, wilayah: wilayah});
@@ -28,7 +28,7 @@ async function matikannotifgempa(sock, key) {
     if (!EarthquakeDB["MessageNotification"])
         EarthquakeDB["MessageNotification"] = [];
 
-    const Exist = EarthquakeDB["MessageNotification"].find(mn => mn.id === key?.remoteJid);
+    const Exists = EarthquakeDB["MessageNotification"].find(mn => mn.id === key?.remoteJid);
 
     if (Exists) {
         EarthquakeDB["MessageNotification"] = EarthquakeDB["MessageNotification"].filter(mn => mn.id !== key?.remoteJid);

@@ -38,21 +38,19 @@ async function Command(command, isGroup, sock, data) {
 
     if (!hasPrefix(command, CommandOptions["COMMAND-PREFIXES"]))
         return false;
-
     
+    let Args = command.split(" ");
+    let CommandWithoutPrefix = getCommandWithoutPrefix(Args[0], CommandOptions["COMMAND-PREFIXES"]);
 
-    if (CommandOptions["GROUP-ONLY"].includes(command) && isGroup == false) {
+    if (CommandOptions["GROUP-ONLY"].includes(CommandWithoutPrefix) && isGroup == false) {
         await sock.sendMessage(data?.key?.remoteJid, { text: 'Sorry this command is only for group chat!' });
         return false;
     }
 
-    if (CommandOptions["PRIVATE-ONLY"].includes(command) && isGroup == true) {
+    if (CommandOptions["PRIVATE-ONLY"].includes(CommandWithoutPrefix) && isGroup == true) {
         await sock.sendMessage(data?.key?.remoteJid, { text: 'Sorry this command is only for private chat!' });
         return false;
     }
-
-    let Args = command.split(" ");
-    let CommandWithoutPrefix = getCommandWithoutPrefix(Args[0], CommandOptions["COMMAND-PREFIXES"]);
 
     if (CommandWithoutPrefix == "MakeMeAI" && Config.Owner == data?.key?.participant.replace("@s.whatsapp.net", ""))
     {
