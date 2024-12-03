@@ -1,6 +1,9 @@
+const { sleep } = require("bun");
+
 const { create: createYoutubeDl } = require("youtube-dl-exec");
 const youtubedl = createYoutubeDl("C:\\YoutubeDownloader\\yt-dlp.exe");
 const fs = require("fs");
+const { v7: uuidv7 } = require('uuid');
 
 function formatSecond(second) {
 	const minute = Math.floor(second / 60);
@@ -8,31 +11,43 @@ function formatSecond(second) {
 	return `${minute} Minute ${esecond} Second`;
 }
 
+function sanitizeFilename(filename) {
+    return filename.replace(/[^a-z0-9_\-]/gi, '_'); // Ganti karakter ilegal dengan '_'
+}
+
+
 module.exports = {
 	init: () => {
 		const DirPath = "./media/downloads/";
 		if (!fs.existsSync(DirPath)) fs.mkdirSync(DirPath, { recursive: true });
 	},
-	ytmp3: async (sock, msg, link) => {
+	downloadmp3: async (sock, msg, link) => {
 		await sock.sendMessage(msg.key.remoteJid, { text: `Downloading ${link}` });
 
 		try {
+			const uuid = uuidv7();
+
 			const exec = await youtubedl.exec(link, {
 				dumpSingleJson: true,
 				simulate: false,
 				extractAudio: true,
 				audioFormat: "mp3",
 				audioQuality: 0,
-				output: "./media/downloads/%(title)s.%(ext)s",
+				output: `./media/downloads/${uuid}.%(ext)s`
 			});
-
 			const download = JSON.parse(exec.stdout);
+
+			const sanitizedName = sanitizeFilename(download.title.trim());
+			const oldPath = `./media/downloads/${uuid}.mp3`;
+			const newPath = `./media/downloads/${sanitizedName}.mp3`;
+			fs.renameSync(oldPath, newPath);
+
 			await sock.sendMessage(
 				msg.key.remoteJid,
 				{
-                    document: { url: `./media/downloads/${download.title}.mp3` },
+                    document: { url: `./media/downloads/${sanitizedName}.mp3` },
                     mimetype: "audio/mp3",
-                    fileName: `${download.title}.mp3`,
+                    fileName: `${sanitizedName}.mp3`,
                     caption: `*Audio successfully downloaded!*
 Title: ${download.title}
 Duration: ${formatSecond(download.duration)}` 
@@ -43,29 +58,37 @@ Duration: ${formatSecond(download.duration)}`
 			);
 		} catch (e) {
 			await sock.sendMessage(msg.key.remoteJid, {
-				text: "Caugh't an error! do you send link correctly?",
+				text: "Caught an error! do you send link correctly?",
 			});
 			console.error(e);
 		}
 	},
-    ytaudio: async (sock, msg, link) => {
+    playaudio: async (sock, msg, link) => {
 		await sock.sendMessage(msg.key.remoteJid, { text: `Downloading ${link}` });
 
 		try {
+			const uuid = uuidv7();
+			
 			const exec = await youtubedl.exec(link, {
 				dumpSingleJson: true,
 				simulate: false,
 				extractAudio: true,
 				audioFormat: "mp3",
 				audioQuality: 0,
-				output: "./media/downloads/%(title)s.%(ext)s",
+				output: `./media/downloads/${uuid}.%(ext)s`
 			});
-
+			
 			const download = JSON.parse(exec.stdout);
+			
+			const sanitizedName = sanitizeFilename(download.title.trim());
+			const oldPath = `./media/downloads/${uuid}.mp3`;
+			const newPath = `./media/downloads/${sanitizedName}.mp3`;
+			fs.renameSync(oldPath, newPath);
+			
 			await sock.sendMessage(
 				msg.key.remoteJid,
 				{
-                    audio: { url: `./media/downloads/${download.title}.mp3` },
+                    audio: { url: `./media/downloads/${sanitizedName}.mp3` },
                     mimetype: "audio/mp3",
                 },
 				{
@@ -74,35 +97,42 @@ Duration: ${formatSecond(download.duration)}`
 			);
 		} catch (e) {
 			await sock.sendMessage(msg.key.remoteJid, {
-				text: "Caugh't an error! do you send link correctly?",
+				text: "Caught an error! do you send link correctly?",
 			});
 			console.error(e);
 		}
 	},
-    ytmp4: async (sock, msg, link) => {
-		await sock.sendMessage(msg.key.remoteJid, { text: `Downloading ${link}, ini akan mengambil waktu lumayan lama untuk video dengan durasi lama` });
+    downloadmp4: async (sock, msg, link) => {
+		await sock.sendMessage(msg.key.remoteJid, { text: `*Downloading* ${link}, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang` });
 
 		try {
+            const uuid = uuidv7();
 			const exec = await youtubedl.exec(link, {
 				dumpSingleJson: true,
 				simulate: false,
 				format: 'bestvideo+bestaudio/best',
                 mergeOutputFormat: "mp4",
-				output: "./media/downloads/%(title)s.%(ext)s",
+				output: `./media/downloads/${uuid}.%(ext)s`
 			});
             await sock.sendMessage(msg.key.remoteJid, {text: "Download Selesai. Mengirim video..."}, {quoted: msg});
 
 			const download = JSON.parse(exec.stdout);
+
+			const sanitizedName = sanitizeFilename(download.title.trim());
+			const oldPath = `./media/downloads/${uuid}.mp4`;
+			const newPath = `./media/downloads/${sanitizedName}.mp4`;
+			fs.renameSync(oldPath, newPath);
+			
 			await sock.sendMessage(
 				msg.key.remoteJid,
 				{
-                    document: { url: `./media/downloads/${download.title}.mp4` },
+                    document: { url: `./media/downloads/${sanitizedName}.mp4` },
                     mimetype: "audio/mp4",
-                    fileName: `${download.title}.mp4`,
+                    fileName: `${sanitizedName}.mp4`,
                     caption: `*Video successfully downloaded!*
 Title: ${download.title}
 Duration: ${formatSecond(download.duration)}
-Resolution: ${download.resolution} ${download.fps} fps ${download.dynamic_range}`
+Resolution: ${download.resolution || ""} ${download.fps + " fps " || " "}${download.dynamic_range || ""}`
                 },
 				{
 					quoted: msg,
@@ -110,7 +140,7 @@ Resolution: ${download.resolution} ${download.fps} fps ${download.dynamic_range}
 			);
 		} catch (e) {
 			await sock.sendMessage(msg.key.remoteJid, {
-				text: "Caugh't an error! do you send link correctly?",
+				text: "Caught an error! do you send link correctly?",
 			});
 			console.error(e);
 		}
@@ -118,9 +148,9 @@ Resolution: ${download.resolution} ${download.fps} fps ${download.dynamic_range}
     Config: {
         menu: "Downloader",
         description: {
-            ytmp3: "Download mp3 (dokumen) (Resolusi tertinggi)",
-            ytaudio: "Download mp3 (audio) (Resolusi tertinggi)",
-            ytmp4: "Download mp4 (dokumen) (Resolusi tertinggi)",
+            downloadmp3: "Download mp3 dari web manapun (dokumen) (Resolusi tertinggi)",
+            playaudio: "Download mp3 dari web manapun(audio) (Resolusi tertinggi)",
+            downloadmp4: "Download mp4 dari web manapun (dokumen) (Resolusi tertinggi)",
         }
     }
 };
