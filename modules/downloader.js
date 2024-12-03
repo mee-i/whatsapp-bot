@@ -1,7 +1,7 @@
 const { sleep } = require("bun");
 
 const { create: createYoutubeDl } = require("youtube-dl-exec");
-const youtubedl = createYoutubeDl("C:\\YoutubeDownloader\\yt-dlp.exe");
+const downloader = createYoutubeDl("C:\\YoutubeDownloader\\yt-dlp.exe");
 const fs = require("fs");
 const { v7: uuidv7 } = require('uuid');
 
@@ -27,13 +27,16 @@ module.exports = {
 		try {
 			const uuid = uuidv7();
 
-			const exec = await youtubedl.exec(link, {
+			const exec = await downloader.exec(link, {
 				dumpSingleJson: true,
 				simulate: false,
 				extractAudio: true,
 				audioFormat: "mp3",
 				audioQuality: 0,
-				output: `./media/downloads/${uuid}.%(ext)s`
+				output: `./media/downloads/${uuid}.%(ext)s`,
+				noCheckCertificates: true,
+				noWarnings: true,
+				addHeader: ['user-agent:googlebot']
 			});
 			const download = JSON.parse(exec.stdout);
 
@@ -41,6 +44,7 @@ module.exports = {
 			const oldPath = `./media/downloads/${uuid}.mp3`;
 			const newPath = `./media/downloads/${sanitizedName}.mp3`;
 			fs.renameSync(oldPath, newPath);
+            await sock.sendMessage(msg.key.remoteJid, {text: "Download Selesai. Mengirim video..."}, {quoted: msg});
 
 			await sock.sendMessage(
 				msg.key.remoteJid,
@@ -56,6 +60,7 @@ Duration: ${formatSecond(download.duration)}`
 					quoted: msg,
 				}
 			);
+			fs.unlinkSync(newPath);
 		} catch (e) {
 			await sock.sendMessage(msg.key.remoteJid, {
 				text: "Caught an error! do you send link correctly?",
@@ -69,17 +74,21 @@ Duration: ${formatSecond(download.duration)}`
 		try {
 			const uuid = uuidv7();
 
-			const exec = await youtubedl.exec(link, {
+			const exec = await downloader.exec(link, {
 				dumpSingleJson: true,
 				simulate: false,
 				extractAudio: true,
 				audioFormat: "mp3",
 				audioQuality: 0,
-				output: `./media/downloads/${uuid}.%(ext)s`
+				output: `./media/downloads/${uuid}.%(ext)s`,
+				noCheckCertificates: true,
+				noWarnings: true,
+				addHeader: ['user-agent:googlebot']
 			});
 			
 			const download = JSON.parse(exec.stdout);
-			
+			await sock.sendMessage(msg.key.remoteJid, {text: "Download Selesai. Mengirim video..."}, {quoted: msg});
+
 			const sanitizedName = sanitizeFilename(download.title.trim());
 			const oldPath = `./media/downloads/${uuid}.mp3`;
 			const newPath = `./media/downloads/${sanitizedName}.mp3`;
@@ -88,13 +97,14 @@ Duration: ${formatSecond(download.duration)}`
 			await sock.sendMessage(
 				msg.key.remoteJid,
 				{
-                    audio: { url: `./media/downloads/${sanitizedName}.mp3` },
-                    mimetype: "audio/mp3",
+                    audio: { url: newPath },
+                    mimetype: "audio/mp4",
                 },
 				{
 					quoted: msg,
 				}
 			);
+			fs.unlinkSync(newPath);
 		} catch (e) {
 			await sock.sendMessage(msg.key.remoteJid, {
 				text: "Caught an error! do you send link correctly?",
@@ -107,12 +117,15 @@ Duration: ${formatSecond(download.duration)}`
 
 		try {
             const uuid = uuidv7();
-			const exec = await youtubedl.exec(link, {
+			const exec = await downloader.exec(link, {
 				dumpSingleJson: true,
 				simulate: false,
 				format: 'bestvideo+bestaudio/best',
                 mergeOutputFormat: "mp4",
-				output: `./media/downloads/${uuid}.%(ext)s`
+				output: `./media/downloads/${uuid}.%(ext)s`,
+				noCheckCertificates: true,
+				noWarnings: true,
+				addHeader: ['user-agent:googlebot']
 			});
             await sock.sendMessage(msg.key.remoteJid, {text: "Download Selesai. Mengirim video..."}, {quoted: msg});
 
@@ -138,6 +151,7 @@ Resolution: ${download.resolution || ""} ${download.fps + " fps " || " "}${downl
 					quoted: msg,
 				}
 			);
+			fs.unlinkSync(newPath);
 		} catch (e) {
 			await sock.sendMessage(msg.key.remoteJid, {
 				text: "Caught an error! do you send link correctly?",
