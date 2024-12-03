@@ -22,7 +22,7 @@ module.exports = {
 		if (!fs.existsSync(DirPath)) fs.mkdirSync(DirPath, { recursive: true });
 	},
 	downloadmp3: async (sock, msg, link) => {
-		await sock.sendMessage(msg.key.remoteJid, { text: `Downloading ${link}` });
+		await sock.sendMessage(msg.key.remoteJid, { text: `*Downloading* ${link}, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang` });
 
 		try {
 			const uuid = uuidv7();
@@ -69,7 +69,7 @@ Duration: ${formatSecond(download.duration)}`
 		}
 	},
     playaudio: async (sock, msg, link) => {
-		await sock.sendMessage(msg.key.remoteJid, { text: `Downloading ${link}` });
+		await sock.sendMessage(msg.key.remoteJid, { text: `*Downloading* ${link}, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang` });
 
 		try {
 			const uuid = uuidv7();
