@@ -73,4 +73,5 @@ List Menu:
 			{ quoted: msg }
 		);
 	},
+    help: async (sock, msg) => { return module.exports.menu(sock, msg); }
 };
