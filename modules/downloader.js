@@ -1,5 +1,3 @@
-const { sleep } = require("bun");
-
 const { create: createYoutubeDl } = require("youtube-dl-exec");
 const downloader = createYoutubeDl("C:\\YoutubeDownloader\\yt-dlp.exe");
 const fs = require("fs");
