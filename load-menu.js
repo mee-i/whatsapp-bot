@@ -18,6 +18,7 @@ module.exports = {
 
 			files.forEach((file) => {
 				const filePath = "./modules/" + file;
+				delete require.cache[require.resolve(filePath)];
 				if (path.extname(file) === ".js") {
 					console.log("Loading %s", filePath);
 					const lib = require(filePath);
@@ -40,12 +41,10 @@ module.exports = {
 						delete lib.init;
 					}
 
-					// Menginisialisasi MenuName di FunctionCommand jika belum ada
 					if (!FunctionCommand[MenuName]) {
 						FunctionCommand[MenuName] = {};
 					}
 
-					// Iterasi melalui kunci-kunci di lib dan menetapkan mereka ke FunctionCommand
 					Object.keys(lib).forEach((key) => {
 						if (!disableMenu.includes(key)) {
 							FunctionCommand[MenuName][key] = lib[key];

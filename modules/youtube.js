@@ -68,7 +68,7 @@ Duration: ${formatSecond(download.duration)}`
 
 		try {
 			const uuid = uuidv7();
-			
+
 			const exec = await youtubedl.exec(link, {
 				dumpSingleJson: true,
 				simulate: false,
@@ -149,7 +149,7 @@ Resolution: ${download.resolution || ""} ${download.fps + " fps " || " "}${downl
         menu: "Downloader",
         description: {
             downloadmp3: "Download mp3 dari web manapun (dokumen) (Resolusi tertinggi)",
-            playaudio: "Download mp3 dari web manapun(audio) (Resolusi tertinggi)",
+            playaudio: "Download mp3 dari web manapun (audio) (Resolusi tertinggi)",
             downloadmp4: "Download mp4 dari web manapun (dokumen) (Resolusi tertinggi)",
         }
     }

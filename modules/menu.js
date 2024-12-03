@@ -1,5 +1,4 @@
 const { FunctionCommand, FunctionDetails } = require("../config.js");
-const { LoadMenu } = require("../load-menu.js");
 const fs = require("fs");
 
 function getParameterNames(fn) {
@@ -9,11 +8,6 @@ function getParameterNames(fn) {
 }
 
 module.exports = {
-    reloadmenu: async (sock, msg) => {
-        await LoadMenu();
-        await sock.sendMessage(msg.key.remoteJid, { text: "Menu telah direload!"});
-        return true;
-    },
 	menu: async (sock, msg) => {
         const datafile = fs.readFileSync("./cmd-config.json");
         const CommandOptions = JSON.parse(datafile);
@@ -57,7 +51,7 @@ List Menu:
 					menu += ` <${element}>`;
 				});
                 if (FunctionDetails[cmd])
-                    menu += ` - _*${FunctionDetails[cmd]}*_`;
+                    menu += ` - _${FunctionDetails[cmd]}_`;
 				menu += "\n";
 			});
 			menu += "\n";

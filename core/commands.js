@@ -4,6 +4,7 @@ const { FunctionCommand } = require('../config.js');
 const fs = require('node:fs');
 const { Config } = require('../config.js');
 // const { geminiNoWorker } = require('../modules/gemini.js');
+const { LoadMenu } = require('../load-menu.js');
 
 function hasPrefix(command, prefixes) {
     return prefixes.some(prefix => command.startsWith(prefix));
@@ -52,21 +53,11 @@ async function Command(command, isGroup, sock, data) {
         return false;
     }
 
-    if (CommandWithoutPrefix == "MakeMeAI" && Config.Owner == data?.key?.participant.replace("@s.whatsapp.net", ""))
-    {
-        Config.AIMessage.push(data?.key?.remoteJid);
-        await sock.sendMessage(data?.key?.remoteJid, {text: "AI message *enabled* in this chat!"});
+    if (CommandWithoutPrefix == "reloadmenu" && (data?.key?.participant ? (Config.Owner == data?.key?.participant.replace("@s.whatsapp.net", "")) : (Config.Owner == data?.key?.remoteJid.replace("@s.whatsapp.net", "")))) {
+        await LoadMenu();
+        await sock.sendMessage(data?.key?.remoteJid, { text: "Menu telah direload!"});
+        return true;
     }
-
-    if (CommandWithoutPrefix == "StopAI" && Config.Owner == data?.key?.participant.replace("@s.whatsapp.net", ""))
-        {
-            if (Config.AIMessage.includes(data?.key?.remoteJid))
-            {
-                Config.AIMessage = Config.AIMessage.filter(item => item !== data?.key?.remoteJid);
-                await sock.sendMessage(data?.key?.remoteJid, {text: "AI message *disabled* in this chat!"});
-            } else
-                await sock.sendMessage(data?.key?.remoteJid, {text: "This chat already *disabled*!"});
-        }
 
     Object.keys(FunctionCommand).forEach(async menuname => {
         if (FunctionCommand[menuname][CommandWithoutPrefix]) {
