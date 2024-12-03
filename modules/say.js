@@ -1,5 +1,5 @@
-function say(sock, key, text) {
-    sock.sendMessage(key.remoteJid, {text : text})
+function say(sock, msg, text) {
+    sock.sendMessage(msg?.key?.remoteJid, {text : text}, {quoted: msg});
 };
 
 module.exports = {

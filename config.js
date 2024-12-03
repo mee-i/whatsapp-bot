@@ -9,6 +9,7 @@ const Config = {
 };
 
 const FunctionCommand = {};
+const FunctionDetails = {};
 
 const EarthquakeAPI = "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json";
 //const EarthquakeAPI = "http://ancloud.my.id/gempa.json";
@@ -21,6 +22,7 @@ const Gemini = {
 module.exports = {
     Config,
     FunctionCommand,
+    FunctionDetails,
     Gemini,
     EarthquakeAPI
 };

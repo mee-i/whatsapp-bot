@@ -68,40 +68,6 @@ async function Command(command, isGroup, sock, data) {
                 await sock.sendMessage(data?.key?.remoteJid, {text: "This chat already *disabled*!"});
         }
 
-    if (CommandWithoutPrefix == "menu" || CommandWithoutPrefix == "help")
-    {
-        const now = new Date();
-        const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-        const formattedDate = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-        let menu = `*MeeI Bot Menu!*
-_Halo,_ *${data?.pushName}*
-${formattedDate}
-
-Ketik /menu atau /help untuk menampilkan list menu!
-List Menu:
-`;
-        Object.keys(FunctionCommand).forEach(menuname => {
-            menu += "*[ "+menuname+" ]*\n"
-            Object.keys(FunctionCommand[menuname]).forEach(cmd => {
-                const Params = getParameterNames(FunctionCommand[menuname][cmd]);
-                Params.shift();
-                Params.shift();
-                menu += "- *" + CommandOptions["COMMAND-PREFIXES"][0] + cmd + "*";
-                Params.forEach(element => {
-                    menu += " <" + element + ">"
-                });
-                menu += "\n";
-            });
-            menu += "\n";
-        });
-        //This is footer
-        menu += "";
-        await sock.sendMessage(data?.key?.remoteJid, {
-            image: { url: './media/MeeI-Bot.png' },
-            caption: menu,
-        });
-    }
-
     Object.keys(FunctionCommand).forEach(async menuname => {
         if (FunctionCommand[menuname][CommandWithoutPrefix]) {
             const Func = FunctionCommand[menuname][CommandWithoutPrefix];
@@ -116,8 +82,9 @@ List Menu:
                 }
                 
                 try {
-                    await Func(sock, data?.key, ...Args);
+                    await Func(sock, data, ...Args);
                 } catch (error) {
+                    await sock.sendMessage(data?.key?.remoteJid, { text: "Caught an error, please report to owner /bug <message>"});
                     await sock.sendMessage(Config.Owner+"@s.whatsapp.net", { text: `[ERROR REPORT]
 Command: *${CommandOptions["COMMAND-PREFIXES"][0]}${CommandWithoutPrefix}*
 Menu: *${menuname}*

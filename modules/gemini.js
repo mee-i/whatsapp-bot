@@ -43,8 +43,8 @@ const safetySettings = [
 	},
 ];
 
-async function gemini(sock, key, message) {
-	const msg = await sock.sendMessage(key?.remoteJid, { text: "|" });
+async function gemini(sock, msg, message) {
+	const sendmsg = await sock.sendMessage(msg?.key?.remoteJid, { text: "|" });
 	let loadingFrame = 0;
 	const worker = new Worker("./utilities/loading-worker.js");
 	worker.on("message", async (r) => {
@@ -54,16 +54,16 @@ async function gemini(sock, key, message) {
 				.terminate()
 				.then(() => {
 					setTimeout(async () => {
-						await sock.sendMessage(key?.remoteJid, {
+						await sock.sendMessage(msg?.key?.remoteJid, {
 							text: "Failed to generate AI message! (?) (100s Frame Exceed) send report to owner! /bug <message>",
-							edit: msg.key,
+							edit: sendmsg.key,
 						});
 					}, 500);
 				})
 				.catch((error) => {
 					console.error("Error stopping worker:", error);
 				});
-		await sock.sendMessage(key?.remoteJid, { text: r, edit: msg.key });
+		await sock.sendMessage(msg?.key?.remoteJid, { text: r, edit: sendmsg.key });
 		loadingFrame += 1;
 	});
 
@@ -83,13 +83,13 @@ async function gemini(sock, key, message) {
 			userChat: {},
 		};
 	}
-	if (!AIDatabase["gemini"]["userChat"][key?.remoteJid])
-		AIDatabase["gemini"]["userChat"][key?.remoteJid] = [];
+	if (!AIDatabase["gemini"]["userChat"][msg?.key?.remoteJid])
+		AIDatabase["gemini"]["userChat"][msg?.key?.remoteJid] = [];
 
 	const chatSession = model.startChat({
 		generationConfig,
 		safetySettings,
-		history: AIDatabase["gemini"]["userChat"][key?.remoteJid],
+		history: AIDatabase["gemini"]["userChat"][msg?.key?.remoteJid],
 	});
 
 	//console.log(JSON.stringify(chatSession, null, 2));
@@ -105,13 +105,15 @@ async function gemini(sock, key, message) {
 		"utf8"
 	);
 
-	await sock.sendMessage(key?.remoteJid, {
+	await sock.sendMessage(msg?.key?.remoteJid, {
 		text: result.response.text(),
-		edit: msg.key,
+		edit: sendmsg.key,
 	});
 }
 
-async function geminiNoLoading(sock, key, message) {
+
+async function newchat(sock, msg) {
+	await sock.sendMessage(msg?.key?.remoteJid, { text: "Generating new chat..." });
 	const Database = fs.readFileSync("./database/ai-database.json");
 
 	const AIDatabase = JSON.parse(Database);
@@ -122,50 +124,16 @@ async function geminiNoLoading(sock, key, message) {
 			userChat: {},
 		};
 	}
-	if (!AIDatabase["gemini"]["userChat"][key?.remoteJid])
-		AIDatabase["gemini"]["userChat"][key?.remoteJid] = [];
-
-	const chatSession = model.startChat({
-		generationConfig,
-		safetySettings,
-		history: AIDatabase["gemini"]["userChat"][key?.remoteJid],
-	});
-
-	const result = await chatSession.sendMessage(message);
+	if (!AIDatabase["gemini"]["userChat"][msg?.key?.remoteJid])
+		AIDatabase["gemini"]["userChat"][msg?.key?.remoteJid] = [];
+	else AIDatabase["gemini"]["userChat"][msg?.key?.remoteJid] = [];
 
 	fs.writeFileSync(
 		"./database/ai-database.json",
 		JSON.stringify(AIDatabase, null, 4),
 		"utf8"
 	);
-
-	await sock.sendMessage(key?.remoteJid, {
-		text: result.response.text(),
-	});
-}
-
-async function newchat(sock, key) {
-	await sock.sendMessage(key?.remoteJid, { text: "Generating new chat..." });
-	const Database = fs.readFileSync("./database/ai-database.json");
-
-	const AIDatabase = JSON.parse(Database);
-
-	if (!AIDatabase["gemini"]) {
-		AIDatabase["gemini"] = {
-			model,
-			userChat: {},
-		};
-	}
-	if (!AIDatabase["gemini"]["userChat"][key?.remoteJid])
-		AIDatabase["gemini"]["userChat"][key?.remoteJid] = [];
-	else AIDatabase["gemini"]["userChat"][key?.remoteJid] = [];
-
-	fs.writeFileSync(
-		"./database/ai-database.json",
-		JSON.stringify(AIDatabase, null, 4),
-		"utf8"
-	);
-	await sock.sendMessage(key?.remoteJid, { text: "Success!" });
+	await sock.sendMessage(msg?.key?.remoteJid, { text: "Success!" });
 }
 
 module.exports = {
@@ -176,9 +144,7 @@ module.exports = {
 	},
 	newchat,
 	gemini,
-	geminiNoLoading,
 	Config: {
 		menu: "AI",
-		disableMenu: ["geminiNoLoading"],
 	},
 };

@@ -5,6 +5,8 @@ start.sh
 baileys_store.json
 .env
 database/
+media/downloads/
+test.js
 
 # Logs
 

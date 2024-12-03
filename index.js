@@ -14,9 +14,7 @@ const figlet = require("figlet");
 const fs = require("node:fs");
 const path = require("node:path");
 const { Worker } = require("node:worker_threads");
-
-const { FunctionCommand } = require("./config.js");
-
+const { LoadMenu } = require("./load-menu.js")
 const https = require("https");
 
 store.readFromFile("./baileys_store.json");
@@ -26,17 +24,18 @@ setInterval(() => {
 }, 10_000);
 
 async function WhatsappEvent() {
+	await LoadMenu();
 	const { state, saveCreds } = await useMultiFileAuthState("auth_info_baileys");
 	const sock = makeWASocket({
 		// can provide additional config here
 		printQRInTerminal: true,
 		auth: state,
 		cachedGroupMetadata: (jid) => {
-		    return store.fetchGroupMetadata(jid, sock);
+			return store.fetchGroupMetadata(jid, sock);
 		},
 		getMessage: (message) => {
-		    return store.loadMessage(message.remoteJid, message.id);
-		}
+			return store.loadMessage(message.remoteJid, message.id);
+		},
 	});
 
 	const worker = new Worker("./utilities/earthquake-worker.js");
@@ -202,44 +201,6 @@ figlet("MeeI-Bot", (err, data) => {
 	console.log(colors.FgGreen + data + colors.Reset);
 });
 
-fs.readdir("./modules/", (err, files) => {
-	if (err) {
-		console.error("Error reading the directory:", err);
-		return;
-	}
 
-	files.forEach((file) => {
-		const filePath = "./modules/" + file;
-		if (path.extname(file) === ".js") {
-			console.log("Loading %s", filePath);
-			const lib = require(filePath);
-			let MenuName = "";
-			let disableMenu = [];
-
-			if (lib.Config) {
-				if (lib.Config.menu) MenuName = lib.Config.menu;
-				if (lib.Config.disableMenu) disableMenu = lib.Config.disableMenu;
-				delete lib.Config;
-			}
-
-			if (typeof lib.init == "function") {
-				lib.init();
-				delete lib.init;
-			}
-
-			// Menginisialisasi MenuName di FunctionCommand jika belum ada
-			if (!FunctionCommand[MenuName]) {
-				FunctionCommand[MenuName] = {};
-			}
-
-			// Iterasi melalui kunci-kunci di lib dan menetapkan mereka ke FunctionCommand
-			Object.keys(lib).forEach((key) => {
-				if (!disableMenu.includes(key)) {
-					FunctionCommand[MenuName][key] = lib[key];
-				}
-			});
-		}
-	});
-});
 
 WhatsappEvent();
