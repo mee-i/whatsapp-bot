@@ -28,7 +28,9 @@ const generationConfig = {
 	responseMimeType: "text/plain",
 };
 
-function sleep (ms) { return new Promise(resolve => setTimeout(resolve, ms)) };
+function sleep(ms) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 const safetySettings = [
 	{
@@ -43,32 +45,33 @@ const safetySettings = [
 
 async function gemini(sock, key, message) {
 	const msg = await sock.sendMessage(key?.remoteJid, { text: "|" });
-	// TODO: Fix this loading animation
-	// let loadingFrame = 0;
-	// const worker = new Worker("./utilities/loading-worker.js", {type: "module", });
+	let loadingFrame = 0;
+	const worker = new Worker("./utilities/loading-worker.js");
+	worker.on("message", async (r) => {
+		console.log(loadingFrame);
+		if (loadingFrame >= 100)
+			worker
+				.terminate()
+				.then(() => {
+					setTimeout(async () => {
+						await sock.sendMessage(key?.remoteJid, {
+							text: "Failed to generate AI message! (?) (100s Frame Exceed) send report to owner! /bug <message>",
+							edit: msg.key,
+						});
+					}, 500);
+				})
+				.catch((error) => {
+					console.error("Error stopping worker:", error);
+				});
+		await sock.sendMessage(key?.remoteJid, { text: r, edit: msg.key });
+		loadingFrame += 1;
+	});
 
-	// worker.on("message", async (r) => {
-	// 	if (loadingFrame >= 20)
-	// 		worker
-	// 		.terminate()
-	// 		.then(() => {
-	// 			setTimeout(async () => {
-	// 				await sock.sendMessage(key?.remoteJid, { text: "Failed to generate AI message! send report to owner! /bug <message>", edit: msg.key });
-	// 			}, 500);
-	// 		})
-	// 		.catch((error) => {
-	// 			console.error("Error stopping worker:", error);
-	// 		});
-	// 	await sock.sendMessage(key?.remoteJid, { text: r, edit: msg.key });
-	// 	loadingFrame += 1;
-	// });
+	worker.on("error", (e) => {
+		console.error("Worker error:", e);
+	});
 
-	// // Handle errors
-	// worker.on("error", (e) => {
-	// 	console.error("Worker error:", e);
-	// });
-
-	// await sleep(5000);
+	await sleep(5000);
 
 	const Database = fs.readFileSync("./database/ai-database.json");
 
@@ -92,15 +95,9 @@ async function gemini(sock, key, message) {
 	//console.log(JSON.stringify(chatSession, null, 2));
 
 	const result = await chatSession.sendMessage(message);
-	//TODO: Fix this worker
-	// worker
-	// 	.terminate()
-	// 	.then(() => {
-	// 		// console.log("\nLoading complete");
-	// 	})
-	// 	.catch((error) => {
-	// 		console.error("Error stopping worker:", error);
-	// 	});
+	worker.terminate().catch((error) => {
+		console.error("Error stopping worker:", error);
+	});
 
 	fs.writeFileSync(
 		"./database/ai-database.json",
@@ -143,7 +140,7 @@ async function geminiNoLoading(sock, key, message) {
 	);
 
 	await sock.sendMessage(key?.remoteJid, {
-		text: result.response.text()
+		text: result.response.text(),
 	});
 }
 
@@ -172,11 +169,16 @@ async function newchat(sock, key) {
 }
 
 module.exports = {
+	init: () => {
+		const DbFile = "./database/ai-database.json";
+		if (!fs.existsSync(DbFile))
+			fs.writeFileSync(DbFile, JSON.stringify({}), "utf-8");
+	},
 	newchat,
 	gemini,
 	geminiNoLoading,
 	Config: {
 		menu: "AI",
-		disableMenu: [ "geminiNoWorker" ]
+		disableMenu: ["geminiNoLoading"],
 	},
 };

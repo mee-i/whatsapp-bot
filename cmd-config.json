@@ -1,5 +1,5 @@
 {
     "COMMAND-PREFIXES": [ "/" ],
-    "PRIVATE-ONLY": [ "gemini" ],
+    "PRIVATE-ONLY": [ ],
     "GROUP-ONLY" : []
 }

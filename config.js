@@ -1,4 +1,3 @@
-const { processHistoryMessage } = require("@whiskeysockets/baileys");
 
 const Config = {
     Owner: "6281220533069",
@@ -16,7 +15,7 @@ const EarthquakeAPI = "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json";
 
 const Gemini = {
     model: "gemini-1.5-flash",
-    apiKey: Deno.env.get("GEMINI_API_KEY") // Add apiKey in .env
+    apiKey: Bun.env.GEMINI_API_KEY
 }
 
 module.exports = {

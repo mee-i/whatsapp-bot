@@ -18,5 +18,11 @@
     "figlet": "^1.7.0",
     "qrcode-terminal": "^0.12.0",
     "sharp": "^0.32.6"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
   }
 }

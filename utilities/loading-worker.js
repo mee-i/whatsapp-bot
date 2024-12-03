@@ -1,10 +1,9 @@
 const { parentPort } = require('node:worker_threads');
 
-const frames = ['/', '—', '\\\\', '|'];
+const frames = ['/', '—', '\\', '|'];
 let frameIndex = 0;
 
 function sendFrame() {
-    console.log("aaa")
     parentPort.postMessage(frames[frameIndex]);
     frameIndex = (frameIndex + 1) % frames.length;
     setTimeout(sendFrame, 500);
