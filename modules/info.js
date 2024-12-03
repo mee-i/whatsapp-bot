@@ -29,7 +29,12 @@ module.exports = {
         );
     },
     totalmenu: async (sock, msg) => {
-        const total = Object.keys(FunctionCommand).length;
+        let total = 0;
+        Object.keys(FunctionCommand).forEach(key => {
+            Object.keys(FunctionCommand[key]).forEach(cmd => {
+                total++;
+            });
+        });
         await sock.sendMessage(msg?.key?.remoteJid, { text: "Total fitur saat ini adalah " + total });
     },
     bug: async (sock, msg, message) => {
