@@ -28,36 +28,48 @@ async function MessageEventsHandler(data, sock) {
     //terminal.Log(JSON.stringify(data, null, 2));
 }
 async function PrivateChatEventsHandler(data, sock) {
-    // terminal.WarnLog(JSON.stringify(data, null, 2));
+    const text = (data?.message?.extendedTextMessage) ? data?.message?.extendedTextMessage?.text : (
+        data?.message?.conversation ?
+            data?.message?.conversation
+        : (
+            data?.message?.imageMessage ?
+                data?.message?.imageMessage?.caption
+            : (
+                data?.message?.documentWithCaptionMessage ?
+                    data?.message?.documentWithCaptionMessage?.message?.documentMessage?.caption
+                : (
+                    ""
+                )
+            )
+        )
+    )
     const Log = (m) => { 
         terminal.Log(`[${colors.FgCyan}PC${colors.FgGreen}][${data?.key?.remoteJid}][${data.pushName}]: ` + m);
     }
-    if (data?.message?.extendedTextMessage) {
-        const text = data?.message?.extendedTextMessage?.text;
-        const datafile = fs.readFileSync("./cmd-config.json");
-        const CommandOptions = JSON.parse(datafile);
-        if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
-            Log(`${colors.FgYellow}${text}`);
-            await Command(text, false, sock, data);
-        } else
-            Log(`${colors.FgWhite}${text}`);
-    } else if (data?.message?.conversation) {
-        const text = data?.message?.conversation;
-        const datafile = fs.readFileSync("./cmd-config.json");
-        const CommandOptions = JSON.parse(datafile);
-        if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
-            Log(`${colors.FgYellow}${text}`);
-            await Command(text, false, sock, data);
-        } else
-            Log(`${colors.FgWhite}${text}`);
-    } else if (data?.message?.imageMessage) {
-        Log(`Image + ${data?.message?.imageMessage?.caption}`)
-    } else if (data?.message?.documentWithCaptionMessage) {
-        Log(`Document + ${data?.message?.documentWithCaptionMessage?.message?.documentMessage?.caption}`)
-    }
+    const datafile = fs.readFileSync("./cmd-config.json");
+    const CommandOptions = JSON.parse(datafile);
+    if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
+        Log(`${colors.FgYellow}${text}`);
+        await Command(text, false, sock, data);
+    } else
+        Log(`${colors.FgWhite}${text}`);
 }
 async function GroupEventsHandler(data, sock) {
-    // console.log(JSON.stringify(data, null, 2));
+    const text = (data?.message?.extendedTextMessage) ? data?.message?.extendedTextMessage?.text : (
+        data?.message?.conversation ?
+            data?.message?.conversation
+        : (
+            data?.message?.imageMessage ?
+                data?.message?.imageMessage?.caption
+            : (
+                data?.message?.documentWithCaptionMessage ?
+                    data?.message?.documentWithCaptionMessage?.message?.documentMessage?.caption
+                : (
+                    ""
+                )
+            )
+        )
+    )
     const Metadata = await store.fetchGroupMetadata(data?.key?.remoteJid, sock);
     const GroupTitle = Metadata?.subject;
 
@@ -65,44 +77,13 @@ async function GroupEventsHandler(data, sock) {
         terminal.Log(`[${colors.FgBlue}GC${colors.FgGreen}][${GroupTitle}][${data?.pushName}]: ` + m)
     }
 
-    if (data?.message?.extendedTextMessage) {
-        const text = data?.message?.extendedTextMessage?.text;
-        const datafile = fs.readFileSync("./cmd-config.json");
-        const CommandOptions = JSON.parse(datafile);
-
-        if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
-            Log(`${colors.FgYellow}${text}`);
-            await Command(text, true, sock, data);
-        } else {
-            Log(`Extended Message: ${colors.FgWhite}${text}`);
-        }
-    } else if (data?.message?.conversation) {
-        const text = data?.message?.conversation;
-
-        const datafile = fs.readFileSync("./cmd-config.json");
-        const CommandOptions = JSON.parse(datafile);
-        if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
-            Log(`${colors.FgYellow}${text}`);
-            await Command(text, true, sock, data);
-        } else {
-            Log(`From Conversation: ${colors.FgWhite}${text}`);
-        }
-    } else if (data?.message?.imageMessage) {
-        Log(`Image + ${data?.message?.imageMessage?.caption}`)
-    } else if (data?.message?.documentWithCaptionMessage) {
-        Log(`Document + ${data?.message?.documentWithCaptionMessage?.message?.documentMessage?.caption}`)
-    }
-
-    // if (isContains(data?.message, "imageMessage")) {
-    //     Log(`Image + ${data?.message?.imageMessage?.caption}`);
-    // }
-    // if (isContains(data?.message, "documentWithCaptionMessage")) {
-    //     Log(`Document + ${data?.message?.documentWithCaptionMessage?.message?.caption}`);
-    // }
-    // else {
-    //     terminal.WarnLog(`[WARNING]: ${colors.FgWhite}No handler for ${data?.key?.remoteJid}, skipping.`);
-    // }
-    // Handle group-specific events here
+    const datafile = fs.readFileSync("./cmd-config.json");
+    const CommandOptions = JSON.parse(datafile);
+    if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
+        Log(`${colors.FgYellow}${text}`);
+        await Command(text, false, sock, data);
+    } else
+        Log(`${colors.FgWhite}${text}`);
 }
 module.exports = {
     MessageEventsHandler
