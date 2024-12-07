@@ -40,9 +40,9 @@ ${formattedDate}
 Ketik /menu atau /help untuk menampilkan list menu!
 List Menu:
 `;
-		Object.keys(FunctionCommand).forEach((menuname) => {
+		Object.keys(FunctionCommand).sort().forEach((menuname) => {
 			menu += "*[ " + menuname + " ]*\n";
-			Object.keys(FunctionCommand[menuname]).forEach((cmd) => {
+			Object.keys(FunctionCommand[menuname]).sort().forEach((cmd) => {
 				const Params = getParameterNames(FunctionCommand[menuname][cmd]);
 				Params.shift();
 				Params.shift();

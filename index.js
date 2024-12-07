@@ -12,7 +12,6 @@ const Terminal = require("./utilities/terminal.js");
 
 const figlet = require("figlet");
 const fs = require("node:fs");
-const path = require("node:path");
 const { Worker } = require("node:worker_threads");
 const { LoadMenu } = require("./load-menu.js")
 const https = require("https");

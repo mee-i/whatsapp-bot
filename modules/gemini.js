@@ -146,5 +146,8 @@ module.exports = {
 	gemini,
 	Config: {
 		menu: "AI",
+		description: {
+			gemini: `AI Gemini (${Config.Gemini.model})`
+		}
 	},
 };

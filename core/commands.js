@@ -33,6 +33,8 @@ async function Command(command, isGroup, sock, data) {
         throw new TypeError('The "isGroup" parameter must be a boolean.');
     }
 
+    if (data?.fromMe)
+        return;
     
     const datafile = fs.readFileSync("./cmd-config.json");
     const CommandOptions = JSON.parse(datafile);

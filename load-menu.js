@@ -5,11 +5,11 @@ const path = require("path");
 module.exports = {
 	LoadMenu: async () => {
 		Object.keys(FunctionCommand).forEach((key) => {
-            delete FunctionCommand[key];
-        });
+			delete FunctionCommand[key];
+		});
 		Object.keys(FunctionDetails).forEach((key) => {
-            delete FunctionDetails[key];
-        });
+			delete FunctionDetails[key];
+		});
 		fs.readdir("./modules/", (err, files) => {
 			if (err) {
 				console.error("Error reading the directory:", err);
@@ -52,6 +52,13 @@ module.exports = {
 					});
 				}
 			});
+			FunctionCommand = Object.keys(FunctionCommand)
+				.sort()
+				.reduce((acc, key) => {
+					acc[key] = FunctionCommand[key];
+					return acc;
+				}, {});
+			console.log("here: ", FunctionCommand);
 		});
 	},
 };
