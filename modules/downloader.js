@@ -1,5 +1,5 @@
 const { create: createYoutubeDl } = require("youtube-dl-exec");
-const downloader = createYoutubeDl("C:\\YoutubeDownloader\\yt-dlp.exe");
+const downloader = createYoutubeDl("yt-dlp");
 const fs = require("fs");
 const { v7: uuidv7 } = require('uuid');
 
@@ -34,7 +34,7 @@ module.exports = {
 				output: `./media/downloads/${uuid}.%(ext)s`,
 				noCheckCertificates: true,
 				noWarnings: true,
-				addHeader: ['user-agent:googlebot']
+				addHeader: ['referer:youtube.com', 'user-agent:googlebot']
 			});
 			const download = JSON.parse(exec.stdout);
 
@@ -81,7 +81,7 @@ Duration: ${formatSecond(download.duration)}`
 				output: `./media/downloads/${uuid}.%(ext)s`,
 				noCheckCertificates: true,
 				noWarnings: true,
-				addHeader: ['user-agent:googlebot']
+				addHeader: ['referer:youtube.com', 'user-agent:googlebot']
 			});
 			
 			const download = JSON.parse(exec.stdout);
@@ -123,7 +123,7 @@ Duration: ${formatSecond(download.duration)}`
 				output: `./media/downloads/${uuid}.%(ext)s`,
 				noCheckCertificates: true,
 				noWarnings: true,
-				addHeader: ['user-agent:googlebot']
+				addHeader: ['referer:youtube.com', 'user-agent:googlebot']
 			});
             await sock.sendMessage(msg.key.remoteJid, {text: "Download Selesai. Mengirim video..."}, {quoted: msg});
 
