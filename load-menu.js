@@ -58,7 +58,6 @@ module.exports = {
 					acc[key] = FunctionCommand[key];
 					return acc;
 				}, {});
-			console.log("here: ", FunctionCommand);
 		});
 	},
 };
