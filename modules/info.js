@@ -36,11 +36,11 @@ module.exports = {
         await sock.sendMessage(msg?.key?.remoteJid, { text: "Total fitur saat ini adalah " + total });
     },
     bug: async (sock, msg, message) => {
-        await sock.sendMessage(msg?.key?.remoteJid, { text: "Pesan telah dikirim kepada owner bot!" });
         await sock.sendMessage(`${Config.Owner}@s.whatsapp.net`, { text: `[BUG REPORT]
-From: *${msg.pushName}*
-Jid: *${msg.key.remoteJid}*
-Pesan: _${message}_`});
+            From: *${msg.pushName}*
+            Jid: *${msg.key.remoteJid}*
+            Pesan: _${message}_`});
+        await sock.sendMessage(msg?.key?.remoteJid, { text: "Pesan telah dikirim kepada owner bot!" });
     },
     report: async (a, b, c) => { return module.exports.bug(a, b, c); },
     Config: {
