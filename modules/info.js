@@ -1,5 +1,5 @@
 const { FunctionCommand, Config } = require('../config.js');
-
+const { store } = require('../core/memory-store.js');
 module.exports = {
     ping: async(sock, msg) => {
         const startTime = Date.now();
@@ -31,9 +31,7 @@ module.exports = {
     totalmenu: async (sock, msg) => {
         let total = 0;
         Object.keys(FunctionCommand).forEach(key => {
-            Object.keys(FunctionCommand[key]).forEach(cmd => {
-                total++;
-            });
+            total++;
         });
         await sock.sendMessage(msg?.key?.remoteJid, { text: "Total fitur saat ini adalah " + total });
     },
@@ -44,7 +42,7 @@ From: *${msg.pushName}*
 Jid: *${msg.key.remoteJid}*
 Pesan: _${message}_`});
     },
-    report: async (a, b, c) => { return module.exports.bug(a, b, c); } ,
+    report: async (a, b, c) => { return module.exports.bug(a, b, c); },
     Config: {
         menu: "Info"
     }

@@ -1,4 +1,4 @@
-let { FunctionCommand, FunctionDetails } = require("./config.js");
+let { FunctionCommand, FunctionDetails, MenuList } = require("./config.js");
 const fs = require("fs");
 const path = require("path");
 
@@ -9,6 +9,9 @@ module.exports = {
 		});
 		Object.keys(FunctionDetails).forEach((key) => {
 			delete FunctionDetails[key];
+		});
+		Object.keys(MenuList).forEach((key) => {
+			delete MenuList[key];
 		});
 		fs.readdir("./modules/", (err, files) => {
 			if (err) {
@@ -22,42 +25,60 @@ module.exports = {
 				if (path.extname(file) === ".js") {
 					console.log("Loading %s", filePath);
 					const lib = require(filePath);
-					let MenuName = "";
 					let disableMenu = [];
+					let menuname = "";
 
 					if (lib.Config) {
-						if (lib.Config.menu) MenuName = lib.Config.menu;
+						menuname = lib.Config.menu ?? "";
+						if (!MenuList[menuname])
+							MenuList[menuname] = [];
 						if (lib.Config.disableMenu) disableMenu = lib.Config.disableMenu;
-						if (lib.Config.description)
-							Object.keys(lib.Config.description).forEach((fname) => {
-								FunctionDetails[fname] = lib.Config.description[fname];
+						if (lib.Config.details)
+							Object.keys(lib.Config.details).forEach((fname) => {
+								if (!FunctionDetails[fname]) {
+									FunctionDetails[fname] = {};
+								}
+								FunctionDetails[fname].owneronly = lib.Config.details[fname].owneronly ?? false;
+								FunctionDetails[fname].admingroup = lib.Config.details[fname].owneronly ?? false;
+								FunctionDetails[fname].description = lib.Config.details[fname].description ?? "";
+								FunctionDetails[fname].menu = menuname;
+								if (!MenuList[menuname].includes(fname))
+									MenuList[menuname].push(fname);
 							});
 
 						delete lib.Config;
 					}
+
+					if (!MenuList[menuname])
+						MenuList[menuname] = [];
 
 					if (typeof lib.init == "function") {
 						lib.init();
 						delete lib.init;
 					}
 
-					if (!FunctionCommand[MenuName]) {
-						FunctionCommand[MenuName] = {};
-					}
-
 					Object.keys(lib).forEach((key) => {
 						if (!disableMenu.includes(key)) {
-							FunctionCommand[MenuName][key] = lib[key];
+							FunctionCommand[key] = lib[key];
+							if (!MenuList[menuname].includes(key))
+								MenuList[menuname].push(key);
+							if (!FunctionDetails[key]) {
+								FunctionDetails[key] = {
+									owneronly: false,
+                  admingroup: false,
+                  description: "",
+                  menu: menuname,
+								};
+							}
+
 						}
 					});
 				}
 			});
 			FunctionCommand = Object.keys(FunctionCommand)
-				.sort()
-				.reduce((acc, key) => {
-					acc[key] = FunctionCommand[key];
-					return acc;
-				}, {});
+				.sort();
+			MenuList = Object.keys(MenuList)
+				.sort();
 		});
 	},
 };

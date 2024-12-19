@@ -1,19 +1,19 @@
 module.exports = {
-	checkip: async (sock, msg, ip) => {
-		await sock.sendMessage(msg.key.remoteJid, { text: `Checking for ${ip}` });
-		const response = await fetch(
-			`http://ip-api.com/json/${ip}?fields=status,message,continent,continentCode,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,offset,currency,isp,org,as,asname,mobile,proxy,hosting,query`
-		);
-		const data = await response.json();
-		if (data.success == "success") {
-			const locationmsg = await sock.sendMessage(
-				msg.key.remoteJid,
-				{
-					location: { degreesLatitude: data.lat, degreesLongitude: data.lon },
-				},
-				{ quoted: msg }
-			);
-			const text = `
+  checkip: async (sock, msg, ip) => {
+    await sock.sendMessage(msg.key.remoteJid, { text: `Checking for ${ip}` });
+    const response = await fetch(
+      `http://ip-api.com/json/${ip}?fields=status,message,continent,continentCode,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,offset,currency,isp,org,as,asname,mobile,proxy,hosting,query`
+    );
+    const data = await response.json();
+    if (data.success == "success") {
+      const locationmsg = await sock.sendMessage(
+        msg.key.remoteJid,
+        {
+          location: { degreesLatitude: data.lat, degreesLongitude: data.lon },
+        },
+        { quoted: msg }
+      );
+      const text = `
 *IP*: ${data.query}
 *Status*: ${data.status}
 *Continent*: ${data.continent} (${data.continentCode})
@@ -33,27 +33,29 @@ module.exports = {
 *Proxy*: ${data.proxy ? "Yes" : "No"}
 *Hosting*: ${data.hosting ? "Yes" : "No"}
 `;
-			await sock.sendMessage(
-				msg.key.remoteJid,
-				{
-					text: text,
-				},
-				{ quoted: locationmsg }
-			);
-		} else {
-			await sock.sendMessage(
-				msg.key.remoteJid,
-				{
-					text: `Failed to get info of ${ip}, did you send ip correctly?`,
-				},
-				{ quoted: msg }
-			);
-		}
-	},
-	Config: {
-		menu: "Tools",
-		description: {
-			checkip: "Check IP information",
-		},
-	},
+      await sock.sendMessage(
+        msg.key.remoteJid,
+        {
+          text: text,
+        },
+        { quoted: locationmsg }
+      );
+    } else {
+      await sock.sendMessage(
+        msg.key.remoteJid,
+        {
+          text: `Failed to get info of ${ip}, did you send ip correctly?`,
+        },
+        { quoted: msg }
+      );
+    }
+  },
+  Config: {
+    menu: "Tools",
+    details: {
+      checkip: {
+				description: "Check IP information"
+			},
+    },
+  },
 };

@@ -159,10 +159,16 @@ Resolution: ${download.resolution || ""} ${download.fps + " fps " || " "}${downl
 	},
     Config: {
         menu: "Downloader",
-        description: {
-            downloadmp3: "Download mp3 dari web manapun (dokumen) (Resolusi tertinggi)",
-            playaudio: "Download mp3 dari web manapun (audio) (Resolusi tertinggi)",
-            downloadmp4: "Download mp4 dari web manapun (dokumen) (Resolusi tertinggi)",
+        details: {
+            downloadmp3: {
+							description: "Download mp3 dari web manapun (dokumen) (Resolusi tertinggi)"
+						},
+            playaudio: {
+							description: "Download mp3 dari web manapun (audio) (Resolusi tertinggi)",
+						},
+            downloadmp4: {
+							description: "Download mp4 dari web manapun (dokumen) (Resolusi tertinggi)",
+						}
         }
     }
 };

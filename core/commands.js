@@ -1,9 +1,7 @@
-// const { text } = require('figlet');
-const { FunctionCommand } = require('../config.js');
-// const Terminal = require('./terminal.js')
+const { store } = require('./memory-store.js');
+const { FunctionCommand, FunctionDetails } = require('../config.js');
 const fs = require('node:fs');
 const { Config } = require('../config.js');
-// const { geminiNoWorker } = require('../modules/gemini.js');
 const { LoadMenu } = require('../load-menu.js');
 
 function hasPrefix(command, prefixes) {
@@ -55,39 +53,63 @@ async function Command(command, isGroup, sock, data) {
         return false;
     }
 
-    if (CommandWithoutPrefix == "reloadmenu" && (data?.key?.participant ? (Config.Owner == data?.key?.participant.replace("@s.whatsapp.net", "")) : (Config.Owner == data?.key?.remoteJid.replace("@s.whatsapp.net", "")))) {
+    const isOwner = (data?.key?.participant ? (Config.Owner == data?.key?.participant.replace("@s.whatsapp.net", "")) : (Config.Owner == data?.key?.remoteJid.replace("@s.whatsapp.net", "")));
+
+    if (CommandWithoutPrefix == "reloadmenu" && isOwner) {
         await LoadMenu();
         await sock.sendMessage(data?.key?.remoteJid, { text: "Menu telah direload!"});
         return true;
     }
 
-    Object.keys(FunctionCommand).forEach(async menuname => {
-        if (FunctionCommand[menuname][CommandWithoutPrefix]) {
-            const Func = FunctionCommand[menuname][CommandWithoutPrefix];
-            const Params = getParameterNames(Func);
-            const FuncParameterLength = Params.length - 2;
-            if ((Args.length - 1) < FuncParameterLength) {
-                await sock.sendMessage(data?.key?.remoteJid, { text: "Need more arguments!"});
-            } else {
-                Args.shift();
-                if (FuncParameterLength === 1 && Args.length > 1) {
-                    Args = [Args.join(" ")];
-                }
-                
-                try {
-                    await Func(sock, data, ...Args);
-                } catch (error) {
-                    await sock.sendMessage(data?.key?.remoteJid, { text: "Caught an error, please report to owner /bug <message>"});
-                    await sock.sendMessage(Config.Owner+"@s.whatsapp.net", { text: `[ERROR REPORT]
-Command: *${CommandOptions["COMMAND-PREFIXES"][0]}${CommandWithoutPrefix}*
-Menu: *${menuname}*
-Error: _${error.message}_
-Stack Trace: _${error.stack}_
-                    ` });
+    if (FunctionCommand[CommandWithoutPrefix]) {
+        if (FunctionDetails[CommandWithoutPrefix].owneronly && !isOwner) {
+            await sock.sendMessage(data?.key?.remoteJid, { text: "This command is only for bot owner!"});
+            return false;
+        }
+
+        if (FunctionDetails[CommandWithoutPrefix].adminonly && isGroup) {
+            const metadata = await store.fetchGroupMetadata(data?.key?.jid, sock);
+            let isAdmin = false;
+            for (const participant of metadata.participants) {
+                if (participant.id == data?.key?.participant) {
+                    if (participant.admin == "superadmin" || participant.admin == "admin")
+                        isAdmin = true;
+                    break;
                 }
             }
+            if (!isAdmin)
+                await sock.sendMessage(data?.key?.remoteJid, { text: "This command is only for group admin!"});
+            return false;
         }
-    })
+
+        if (FunctionDetails[CommandWithoutPrefix].adminonly && !isGroup) {
+            await sock.sendMessage(data?.key?.remoteJid, { text: "This command is only for group chat!"});
+            return false;
+        }
+
+        const Func = FunctionCommand[CommandWithoutPrefix];
+        const Params = getParameterNames(Func);
+        const FuncParameterLength = Params.length - 2;
+        if ((Args.length - 1) < FuncParameterLength) {
+            await sock.sendMessage(data?.key?.remoteJid, { text: "Need more arguments!"});
+        } else {
+            Args.shift();
+            if (FuncParameterLength === 1 && Args.length > 1) {
+                Args = [Args.join(" ")];
+            }
+            
+            try {
+                await Func(sock, data, ...Args);
+            } catch (error) {
+                await sock.sendMessage(data?.key?.remoteJid, { text: "Caught an error, please report to owner /bug <message>"});
+                await sock.sendMessage(Config.Owner+"@s.whatsapp.net", { text: `[ERROR REPORT]
+Command: *${CommandOptions["COMMAND-PREFIXES"][0]}${CommandWithoutPrefix}*
+Error: _${error.message}_
+Stack Trace: _${error.stack}_
+                ` });
+            }
+        }
+    }
     return true;
 }
 

@@ -1,9 +1,3 @@
-/*
- * Install the Generative AI SDK
- *
- * $ npm install @google/generative-ai
- */
-
 const {
 	GoogleGenerativeAI,
 	HarmCategory,
@@ -48,7 +42,6 @@ async function gemini(sock, msg, message) {
 	let loadingFrame = 0;
 	const worker = new Worker("./utilities/loading-worker.js");
 	worker.on("message", async (r) => {
-		console.log(loadingFrame);
 		if (loadingFrame >= 100)
 			worker
 				.terminate()
@@ -91,8 +84,6 @@ async function gemini(sock, msg, message) {
 		safetySettings,
 		history: AIDatabase["gemini"]["userChat"][msg?.key?.remoteJid],
 	});
-
-	//console.log(JSON.stringify(chatSession, null, 2));
 
 	const result = await chatSession.sendMessage(message);
 	worker.terminate().catch((error) => {
@@ -146,8 +137,10 @@ module.exports = {
 	gemini,
 	Config: {
 		menu: "AI",
-		description: {
-			gemini: `AI Gemini (${Config.Gemini.model})`
+		details: {
+			gemini: {
+				description: `AI Gemini (${Config.Gemini.model})`
+			}
 		}
 	},
 };
