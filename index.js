@@ -28,6 +28,7 @@ async function WhatsappEvent() {
   const sock = makeWASocket({
     // can provide additional config here
     printQRInTerminal: true,
+		shouldSyncHistoryMessage: false,
     syncFullHistory: false,
     auth: state,
     cachedGroupMetadata: (jid) => {
