@@ -1,5 +1,5 @@
 {
-    "COMMAND-PREFIXES": [ "/" ],
+    "COMMAND-PREFIXES": [ "/", ".", "!" ],
     "PRIVATE-ONLY": [ ],
     "GROUP-ONLY" : []
 }

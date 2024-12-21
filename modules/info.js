@@ -42,7 +42,7 @@ module.exports = {
             Pesan: _${message}_`});
         await sock.sendMessage(msg?.key?.remoteJid, { text: "Pesan telah dikirim kepada owner bot!" });
     },
-    report: async (a, b, c) => { return module.exports.bug(a, b, c); },
+    report: async (a, b, message) => module.exports.bug(a, b, message),
     Config: {
         menu: "Info"
     }
