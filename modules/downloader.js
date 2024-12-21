@@ -199,30 +199,30 @@ Resolution: ${download.resolution || ""} ${download.fps + " fps " || " "}${
         description:
           "Download mp4 dari web manapun (dokumen) (Resolusi tertinggi)",
       },
-			instagram: {
-        description:
-          "Download mp4 dari Instagram (dokumen) (Resolusi tertinggi)",
-      },
-			ig: {
-        description:
-          "Download mp4 dari Instagram (dokumen) (Resolusi tertinggi)",
-      },
-			igaudio: {
-        description:
-          "Download mp3 dari Instagram (audio) (Resolusi tertinggi)",
-      },
-			tiktok: {
-        description:
-          "Download mp4 dari Tiktok (dokumen) (Resolusi tertinggi)",
-      },
-			tt: {
-        description:
-          "Download mp4 dari Tiktok (dokumen) (Resolusi tertinggi)",
-      },
-			ttaudio: {
-        description:
-          "Download mp3 dari Tiktok (audio) (Resolusi tertinggi)",
-      },
+			// instagram: {
+      //   description:
+      //     "Download mp4 dari Instagram (dokumen) (Resolusi tertinggi)",
+      // },
+			// ig: {
+      //   description:
+      //     "Download mp4 dari Instagram (dokumen) (Resolusi tertinggi)",
+      // },
+			// igaudio: {
+      //   description:
+      //     "Download mp3 dari Instagram (audio) (Resolusi tertinggi)",
+      // },
+			// tiktok: {
+      //   description:
+      //     "Download mp4 dari Tiktok (dokumen) (Resolusi tertinggi)",
+      // },
+			// tt: {
+      //   description:
+      //     "Download mp4 dari Tiktok (dokumen) (Resolusi tertinggi)",
+      // },
+			// ttaudio: {
+      //   description:
+      //     "Download mp3 dari Tiktok (audio) (Resolusi tertinggi)",
+      // },
     },
   },
 };
