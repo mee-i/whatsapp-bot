@@ -5,7 +5,7 @@ module.exports = {
       `http://ip-api.com/json/${ip}?fields=status,message,continent,continentCode,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,offset,currency,isp,org,as,asname,mobile,proxy,hosting,query`
     );
     const data = await response.json();
-    if (data.success == "success") {
+    if (data.status == "success") {
       const locationmsg = await sock.sendMessage(
         msg.key.remoteJid,
         {

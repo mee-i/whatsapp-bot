@@ -3,6 +3,8 @@ const { FunctionCommand, FunctionDetails } = require('../config.js');
 const fs = require('node:fs');
 const { Config } = require('../config.js');
 const { LoadMenu } = require('../load-menu.js');
+const db = require('../utilities/database.js');
+const xp =  require('../utilities/xp.js');
 
 function hasPrefix(command, prefixes) {
     return prefixes.some(prefix => command.startsWith(prefix));
@@ -34,8 +36,8 @@ async function Command(command, isGroup, sock, data) {
     if (data?.fromMe)
         return;
     
-    const datafile = fs.readFileSync("./cmd-config.json");
-    const CommandOptions = JSON.parse(datafile);
+    const config = await db.Config.ReadConfig();
+    const CommandOptions = config["CommandOptions"];
 
     if (!hasPrefix(command, CommandOptions["COMMAND-PREFIXES"]))
         return false;
@@ -43,6 +45,8 @@ async function Command(command, isGroup, sock, data) {
     let Args = command.split(" ");
     const CommandWithoutPrefix = getCommandWithoutPrefix(Args[0], CommandOptions["COMMAND-PREFIXES"]);
 
+
+    // console.log(CommandOptions, isGroup);
     if (CommandOptions["GROUP-ONLY"].includes(CommandWithoutPrefix) && isGroup == false) {
         await sock.sendMessage(data?.key?.remoteJid, { text: 'Sorry this command is only for group chat!' });
         return false;
@@ -97,6 +101,16 @@ async function Command(command, isGroup, sock, data) {
             if (FuncParameterLength === 1 && Args.length > 1) {
                 Args = [Args.join(" ")];
             }
+            
+            const remoteJid = isGroup ? data?.key?.participant : data?.key?.remoteJid;
+            const userdata = await db.UserData.Read(remoteJid);
+            if (!userdata) {
+                await sock.sendMessage(remoteJid, { text: "Anda belum terdaftar di database, tunggu sebentar kami akan mendaftarkan anda secara otomatis..." });
+                await db.UserData.Add({ remoteJid: remoteJid, name: data.pushName });
+                await sock.sendMessage(remoteJid, { text: "Daftar selesai!" });
+            }
+
+            await xp.add({remoteJid: remoteJid, sock, msg: data});
             
             try {
                 await Func(sock, data, ...Args);

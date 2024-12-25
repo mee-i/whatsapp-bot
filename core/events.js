@@ -1,11 +1,12 @@
 const terminal = require('../utilities/terminal.js');
 const colors = require('../utilities/colors.js');
+const db = require('../utilities/database.js');
 
 const { Command } = require('./commands.js')
-const store = require('./memory-store.js');
 
 const fs = require('node:fs');
-const { Config } = require('../config.js');
+const { Config, AutoFunction } = require('../config.js');
+
 function hasPrefix(command, prefixes) {
     return prefixes.some(prefix => command.startsWith(prefix));
 }
@@ -31,15 +32,24 @@ async function MessageEventsHandler(rawdata, sock) {
             const Log = (m) => { 
                 terminal.Log(`[${colors.FgCyan}PC${colors.FgGreen}][${data?.key?.remoteJid}][${data.pushName}]: ` + m);
             }
-            const datafile = fs.readFileSync("./cmd-config.json");
-            const CommandOptions = JSON.parse(datafile);
+            const datafile = await db.Config.ReadConfig();
+            const CommandOptions = datafile["CommandOptions"];  
+
             if (Config.ReadMessage)
                 await sock.readMessages([data.key]);
-            const isGroup = (data.key.remoteJid.search(`@s.whatsapp.net`) !== -1);
+            const isGroup = data.key.remoteJid.includes('@g.us');
+
+            Object.keys(AutoFunction).forEach(async (key) => {
+                if (data.status == "PENDING" || data.key.fromMe)
+                    return data;
+                await AutoFunction[key]({sock, msg: data, text, isGroup});
+            });
+
             if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
                 Log(`${colors.FgYellow}${text}`);
                 if (data.status == "PENDING" || data.key.fromMe)
                     return data;
+
                 await Command(text, isGroup, sock, data);
             } else {
                 Log(`${colors.FgWhite}${text}`);

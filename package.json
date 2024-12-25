@@ -10,22 +10,22 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@google/generative-ai": "^0.17.1",
+    "@google/generative-ai": "^0.21.0",
     "@whiskeysockets/baileys": "^6.7.9",
-    "axios": "^1.7.7",
-    "chalk": "^5.3.0",
-    "dotenv": "^16.4.5",
-    "figlet": "^1.7.0",
+    "axios": "^1.7.9",
+    "chalk": "^5.4.1",
+    "dotenv": "^16.4.7",
+    "figlet": "^1.8.0",
     "qrcode-terminal": "^0.12.0",
-    "sharp": "^0.32.6",
-    "systeminformation": "^5.23.5",
+    "sharp": "^0.33.5",
+    "systeminformation": "^5.23.21",
     "uuid": "^11.0.3",
     "youtube-dl-exec": "^3.0.10"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "^1.1.14"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.7.2"
   }
 }

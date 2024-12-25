@@ -1,0 +1,15 @@
+{
+  "CommandOptions": {
+    "COMMAND-PREFIXES": [
+      "/",
+      ".",
+      "!"
+    ],
+    "PRIVATE-ONLY": [],
+    "GROUP-ONLY": [
+      "antilink",
+      "everyone"
+    ]
+  },
+  "AntiLink": []
+}

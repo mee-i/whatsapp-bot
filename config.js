@@ -9,6 +9,7 @@ const Config = {
 };
 
 const FunctionCommand = {};
+const AutoFunction = {};
 const FunctionDetails = {};
 const MenuList = {};
 
@@ -23,6 +24,7 @@ const Gemini = {
 module.exports = {
   Config,
   FunctionCommand,
+  AutoFunction,
   FunctionDetails,
   MenuList,
   Gemini,

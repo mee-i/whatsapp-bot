@@ -1,4 +1,4 @@
-let { FunctionCommand, FunctionDetails, MenuList } = require("./config.js");
+let { FunctionCommand, FunctionDetails, AutoFunction, MenuList } = require("./config.js");
 const fs = require("fs");
 const path = require("path");
 
@@ -28,7 +28,7 @@ module.exports = {
 					let disableMenu = [];
 					let menuname = "";
 
-					if (lib.Config) {
+					if (lib.Config && !file.startsWith("_")) {
 						menuname = lib.Config.menu ?? "";
 						if (!MenuList[menuname])
 							MenuList[menuname] = [];
@@ -58,7 +58,7 @@ module.exports = {
 					}
 
 					Object.keys(lib).forEach((key) => {
-						if (!disableMenu.includes(key)) {
+						if (!disableMenu.includes(key) && !file.startsWith("_")) {
 							FunctionCommand[key] = lib[key];
 							if (!MenuList[menuname].includes(key))
 								MenuList[menuname].push(key);
@@ -70,7 +70,8 @@ module.exports = {
                   menu: menuname,
 								};
 							}
-
+						} else if (file.startsWith("_")) {
+							AutoFunction[key] = lib[key];
 						}
 					});
 				}

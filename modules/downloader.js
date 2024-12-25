@@ -20,8 +20,8 @@ module.exports = {
   },
   downloadmp3: async (sock, msg, link) => {
     await sock.sendMessage(msg.key.remoteJid, {
-      text: `*Downloading* ${link}, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
-    });
+      text: `*Downloading mp3*, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
+    }, {quoted: msg});
 
     try {
       const uuid = uuidv7();
@@ -73,8 +73,8 @@ Duration: ${formatSecond(download.duration)}`,
   },
   playaudio: async (sock, msg, link) => {
     await sock.sendMessage(msg.key.remoteJid, {
-      text: `*Downloading* ${link}, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
-    });
+      text: `*Downloading mp4*, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
+    }, {quoted: msg});
 
     try {
       const uuid = uuidv7();
@@ -123,16 +123,16 @@ Duration: ${formatSecond(download.duration)}`,
   },
   downloadmp4: async (sock, msg, link) => {
     await sock.sendMessage(msg.key.remoteJid, {
-      text: `*Downloading* ${link}, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
-    });
+      text: `*Downloading mp4*, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
+    }, {quoted: msg});
 
     try {
       const uuid = uuidv7();
       const exec = await downloader.exec(link, {
         dumpSingleJson: true,
         simulate: false,
-				format: "bestvideo[height<=720]+bestaudio/best",
-        // format: "bestvideo+bestaudio/best",
+				// format: "bestvideo[height<=720]+bestaudio/best",
+        format: "bestvideo+bestaudio/best",
         mergeOutputFormat: "mp4",
         output: `./media/downloads/${uuid}.%(ext)s`,
         noCheckCertificates: true,

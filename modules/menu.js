@@ -4,7 +4,8 @@ const {
   MenuList,
   Config,
 } = require("../config.js");
-const fs = require("fs");
+
+const db = require("../utilities/database.js");
 
 function getParameterNames(fn) {
   const functionString = fn.toString();
@@ -14,8 +15,9 @@ function getParameterNames(fn) {
 
 module.exports = {
   menu: async (sock, msg) => {
-    const datafile = fs.readFileSync("./cmd-config.json");
-    const CommandOptions = JSON.parse(datafile);
+    const datafile = await db.Config.ReadConfig();
+    const UserData = await db.UserData.Read(msg?.key?.remoteJid);
+    const CommandOptions = datafile["CommandOptions"];
 
     const now = new Date();
     const months = [
@@ -38,9 +40,14 @@ module.exports = {
       .getMinutes()
       .toString()
       .padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
+    const nextLevelXP = 100 * Math.pow(UserData.level + 1, 2) - UserData.xp;
     let menu = `*${Config.BotName} Menu!*
 _Halo,_ *${msg?.pushName}*
-${formattedDate}
+XP Kamu: ${UserData.xp}
+Level Kamu: ${UserData.level}
+XP untuk level berikutnya: ${nextLevelXP}
+Hari ini Tanggal: *${formattedDate}*
+Prefix: ${CommandOptions["COMMAND-PREFIXES"]}
 
 Ketik /menu atau /help untuk menampilkan list menu!
 List Menu:
