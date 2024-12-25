@@ -1,4 +1,4 @@
-const { store } = require('../core/memory-store.js');
+const store = require('../core/memory-store.js');
 
 module.exports = {
   everyone: async (sock, msg, message) => {
