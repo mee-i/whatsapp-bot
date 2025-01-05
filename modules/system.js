@@ -98,7 +98,7 @@ Size: ${(data.size / (1024 ** 3)).toFixed(2)} GB`
     menu: "Info",
     details: {
       status: {
-        description: "Server Info"
+        description: "System Info"
       }
     }
   }
