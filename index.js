@@ -202,4 +202,4 @@ figlet("MeeI-Bot", (err, data) => {
   console.log(colors.FgGreen + data + colors.Reset);
 });
 
-WhatsappEvent();
+await WhatsappEvent();

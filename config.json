@@ -8,7 +8,8 @@
     "PRIVATE-ONLY": [],
     "GROUP-ONLY": [
       "antilink",
-      "everyone"
+      "everyone",
+      "members"
     ]
   },
   "AntiLink": []

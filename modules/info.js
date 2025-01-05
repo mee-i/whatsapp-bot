@@ -37,9 +37,9 @@ module.exports = {
     },
     bug: async (sock, msg, message) => {
         await sock.sendMessage(`${Config.Owner}@s.whatsapp.net`, { text: `[BUG REPORT]
-            From: *${msg.pushName}*
-            Jid: *${msg.key.remoteJid}*
-            Pesan: _${message}_`});
+From: *${msg.pushName}*
+Jid: *${msg.key.remoteJid}*
+Pesan: _${message}_`});
         await sock.sendMessage(msg?.key?.remoteJid, { text: "Pesan telah dikirim kepada owner bot!" });
     },
     report: async (a, b, message) => module.exports.bug(a, b, message),

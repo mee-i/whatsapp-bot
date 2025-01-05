@@ -13,7 +13,7 @@ function formatUptime(seconds) {
 
 
 module.exports = {
-  status: async (sock, msg) => {
+  system: async (sock, msg) => {
       await sock.sendMessage(msg.key.remoteJid, {text: "Tunggu sebentar, mengambil informasi..."}); 
       const cpu = await si.cpu();
       const baseboard = await si.baseboard();
@@ -98,7 +98,7 @@ Size: ${(data.size / (1024 ** 3)).toFixed(2)} GB`
     menu: "Info",
     details: {
       status: {
-        description: "Server Status"
+        description: "Server Info"
       }
     }
   }

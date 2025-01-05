@@ -29,15 +29,15 @@ async function MessageEventsHandler(rawdata, sock) {
                     )
                 )
             )
+            const isGroup = data.key.remoteJid.includes('@g.us');
             const Log = (m) => { 
-                terminal.Log(`[${colors.FgCyan}PC${colors.FgGreen}][${data?.key?.remoteJid}][${data.pushName}]: ` + m);
+                terminal.Log(`[${colors.FgCyan}${isGroup ? "GC" : "PC"}${colors.FgGreen}][${data?.key?.remoteJid}][${data.pushName}]: ` + m);
             }
             const datafile = await db.Config.ReadConfig();
             const CommandOptions = datafile["CommandOptions"];  
 
             if (Config.ReadMessage)
                 await sock.readMessages([data.key]);
-            const isGroup = data.key.remoteJid.includes('@g.us');
 
             Object.keys(AutoFunction).forEach(async (key) => {
                 if (data.status == "PENDING" || data.key.fromMe)

@@ -15,8 +15,9 @@ function getParameterNames(fn) {
 
 module.exports = {
   menu: async (sock, msg) => {
+    const remoteJid = msg?.key?.participant ?? msg?.key?.remoteJid;
     const datafile = await db.Config.ReadConfig();
-    const UserData = await db.UserData.Read(msg?.key?.remoteJid);
+    const UserData = await db.UserData.Read(remoteJid);
     const CommandOptions = datafile["CommandOptions"];
 
     const now = new Date();
@@ -52,7 +53,6 @@ Prefix: ${CommandOptions["COMMAND-PREFIXES"]}
 Ketik /menu atau /help untuk menampilkan list menu!
 List Menu:
 `;
-    console.log(FunctionDetails);
     Object.keys(MenuList)
       .sort()
       .forEach((mname) => {

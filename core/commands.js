@@ -71,7 +71,9 @@ async function Command(command, isGroup, sock, data) {
             return false;
         }
 
-        if (FunctionDetails[CommandWithoutPrefix].adminonly && isGroup) {
+        console.log(FunctionDetails[CommandWithoutPrefix]);
+
+        if (FunctionDetails[CommandWithoutPrefix].admingroup && isGroup) {
             const metadata = await store.fetchGroupMetadata(data?.key?.jid, sock);
             let isAdmin = false;
             for (const participant of metadata.participants) {
@@ -86,7 +88,7 @@ async function Command(command, isGroup, sock, data) {
             return false;
         }
 
-        if (FunctionDetails[CommandWithoutPrefix].adminonly && !isGroup) {
+        if (FunctionDetails[CommandWithoutPrefix].admingroup && !isGroup) {
             await sock.sendMessage(data?.key?.remoteJid, { text: "This command is only for group chat!"});
             return false;
         }
@@ -105,14 +107,17 @@ async function Command(command, isGroup, sock, data) {
             const remoteJid = isGroup ? data?.key?.participant : data?.key?.remoteJid;
             const userdata = await db.UserData.Read(remoteJid);
             if (!userdata) {
-                await sock.sendMessage(remoteJid, { text: "Anda belum terdaftar di database, tunggu sebentar kami akan mendaftarkan anda secara otomatis..." });
+                await sock.sendMessage(data?.key?.remoteJid, { text: "Anda belum terdaftar di database, tunggu sebentar kami akan mendaftarkan anda secara otomatis..." });
                 await db.UserData.Add({ remoteJid: remoteJid, name: data.pushName });
-                await sock.sendMessage(remoteJid, { text: "Daftar selesai!" });
+                await sock.sendMessage(data?.key?.remoteJid, { text: "Daftar selesai!" });
             }
 
             await xp.add({remoteJid: remoteJid, sock, msg: data});
             
             try {
+                const checkUserdata = await db.UserData.Read(remoteJid)
+                if (!checkUserdata)
+                    await sock.sendMessage(data?.key?.remoteJid, { text: "Anda belum terdaftar di database, kesalahan kode?? Tunggu sebentar" });
                 await Func(sock, data, ...Args);
             } catch (error) {
                 await sock.sendMessage(data?.key?.remoteJid, { text: "Caught an error, please report to owner /bug <message>"});

@@ -32,5 +32,5 @@ XP untuk level berikutnya: ${nextLevelXP}`, mentions: [`${remoteJid}`] });
 }
 
 module.exports = {
-  add
+  add, baseXP
 };
