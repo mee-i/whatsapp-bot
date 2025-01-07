@@ -97,7 +97,7 @@ Size: ${(data.size / (1024 ** 3)).toFixed(2)} GB`
   Config: {
     menu: "Info",
     details: {
-      status: {
+      system: {
         description: "System Info"
       }
     }
