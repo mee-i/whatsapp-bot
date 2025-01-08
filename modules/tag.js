@@ -15,8 +15,8 @@ module.exports = {
     for (const participant of groupdata.participants) {
         mentions.push(participant.id);
     }
-    await sock.sendMessage(msg.key.remoteJid, { text: `
-${groupdata.participants.map((participant) => `@${participant.id.replace('@s.whatsapp.net', '')}`).join('\n')}
+    await sock.sendMessage(msg.key.remoteJid, { text: `${groupdata.participants.map((participant) => `@${participant.id.replace('@s.whatsapp.net', '')}`).join('\n')}
+
 ${message}
 `, mentions});
   },
@@ -33,6 +33,9 @@ ${message}
     details: {
       everyone: {
         admingroup: true,
+      },
+      tageveryone: {
+        admingroup: true
       },
       hidetagall: {
         admingroup: true,
