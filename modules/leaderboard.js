@@ -2,7 +2,7 @@ const db = require('../utilities/database');
 
 module.exports = {
     leaderboard: async (sock, msg) => {
-        const data = await db.UserData.ReadUserData();
+        const data = await db.ReadUserData();
         const sorted = Object.keys(data).sort((a, b) => data[b].xp - data[a].xp);
         const leaderboard = [];
         for (let i = 0; i < 10; i++) {
