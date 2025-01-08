@@ -1,5 +1,4 @@
-import { Config } from "./antilink";
-import menu from "./menu";
+
 
 function trimIndent(text) {
     const lines = text.split("\n"); // Pisahkan menjadi baris

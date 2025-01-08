@@ -1,4 +1,3 @@
-import menu from "./menu.js";
 
 const {
   GoogleGenerativeAI,
