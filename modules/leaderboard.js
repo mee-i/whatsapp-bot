@@ -10,7 +10,7 @@ module.exports = {
             leaderboard.push(`${i + 1}. *${user.name}* - Level *${user.level}* - XP *${user.xp}*`);
         }
         await sock.sendMessage(msg?.key?.remoteJid, { text: `*Leaderboard MeeI Bot*
-            ${leaderboard.join("\n")}` }, { quoted: msg });
+    ${leaderboard.join("\n")}` }, { quoted: msg });
     },
     Config: {
         menu: "Leaderboard"
