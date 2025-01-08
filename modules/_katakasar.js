@@ -8,7 +8,7 @@ module.exports = {
             "sombong", "banci", "cerewet", "nyinyir", "norak", "kntl", "mmk", "pussy", "nigger", "nigga", "niger", "niga", "ngtd", "fuck", "fck", "wtf", "shit", "sht", "anjg"
         ];
         for (const kata of katakasar)
-            if (text.toLowerCase().includes(kata)) {
+            if (text.toLowerCase().includes(` ${kata} `) || text.toLowerCase() == kata) {
                 await sock.sendMessage(msg?.key?.remoteJid, { text: "Jangan berkata kasar brow!"}, {quoted: msg});
                 return;
             }
