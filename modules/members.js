@@ -11,7 +11,7 @@ module.exports = {
 ${groupdata.participants
   .map((participant) => {
     const id = participant.id || "Unknown ID";
-    const roles = participant.admin;
+    const roles = participant.admin ?? "member";
 
     return `${id} ${roles}`;
   })
