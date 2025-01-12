@@ -12,7 +12,4 @@ module.exports = {
         await sock.sendMessage(msg?.key?.remoteJid, { text: `*Leaderboard MeeI Bot*
 ${leaderboard.join("\n")}` }, { quoted: msg });
     },
-    Config: {
-        menu: "Leaderboard"
-    }
 }

@@ -6,8 +6,10 @@ function say(sock, msg, text) {
 module.exports = {
     say,
     Config: {
-        say: {
-            owneronly: true
+        details: {
+            say: {
+                owneronly: true
+            }
         }
     }
 };
