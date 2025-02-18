@@ -11,19 +11,19 @@
   "description": "",
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
-    "@whiskeysockets/baileys": "^6.7.9",
+    "@whiskeysockets/baileys": "^6.7.13",
     "axios": "^1.7.9",
     "chalk": "^5.4.1",
     "dotenv": "^16.4.7",
     "figlet": "^1.8.0",
     "qrcode-terminal": "^0.12.0",
     "sharp": "^0.33.5",
-    "systeminformation": "^5.25.1",
-    "uuid": "^11.0.3",
-    "youtube-dl-exec": "^3.0.12"
+    "systeminformation": "^5.25.11",
+    "uuid": "^11.0.5",
+    "youtube-dl-exec": "^3.0.15"
   },
   "devDependencies": {
-    "@types/bun": "^1.1.14"
+    "@types/bun": "^1.2.2"
   },
   "peerDependencies": {
     "typescript": "^5.7.2"

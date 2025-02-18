@@ -25,6 +25,8 @@ function getCommandWithoutPrefix(command, prefixes) {
     return command;
 }
 
+var enable_bot = false;
+
 async function Command(command, isGroup, sock, data) {
     if (typeof command !== 'string') {
         throw new TypeError('The "command" parameter must be a string.');
@@ -64,6 +66,22 @@ async function Command(command, isGroup, sock, data) {
         await sock.sendMessage(data?.key?.remoteJid, { text: "Menu telah direload!"});
         return true;
     }
+
+    if (CommandWithoutPrefix == "enablebot" && isOwner) {
+        enable_bot = true;
+        await sock.sendMessage(data?.key?.remoteJid, { text: "Bot telah diaktifkan!"});
+        return true;
+    }
+
+    if (CommandWithoutPrefix == "disablebot" && isOwner) {
+        enable_bot = false;
+        await sock.sendMessage(data?.key?.remoteJid, { text: "Bot telah dinonaktifkan!"});
+        return true;
+    }
+
+    // Do not read if not enabled, because when initial load, it will read all messages
+    if (!enable_bot)
+        return false;
 
     if (FunctionCommand[CommandWithoutPrefix]) {
         if (FunctionDetails[CommandWithoutPrefix].owneronly && !isOwner) {

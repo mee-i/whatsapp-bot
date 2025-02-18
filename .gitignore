@@ -4,8 +4,8 @@ auth_info_baileys/
 start.sh
 baileys_store.json
 .env
-database/
-media/downloads/
+database/*
+media/downloads/*
 test.js
 bot.log
 

@@ -73,7 +73,7 @@ Duration: ${formatSecond(download.duration)}`,
   },
   playaudio: async (sock, msg, link) => {
     await sock.sendMessage(msg.key.remoteJid, {
-      text: `*Downloading mp4*, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
+      text: `*Downloading mp3*, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
     }, {quoted: msg});
 
     try {
