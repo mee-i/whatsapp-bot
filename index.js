@@ -32,10 +32,9 @@ async function WhatsappEvent() {
 		// shouldSyncHistoryMessage: false,
     // syncFullHistory: false,
     auth: state,
-    cachedGroupMetadata: async (jid) => groupCache.get(jid)
-    // getMessage: (message) => {
-    //   return store.loadMessage(message.remoteJid, message.id);
-    // },
+    cachedGroupMetadata: async (jid) => groupCache.get(jid),
+    // getMessage: async (key) => await getMessageFromStore(key)
+    getMessage: async (message) => await store.loadMessage(message.remoteJid, message.id),
   });
   sock.ev.on('groups.update', async ([event]) => {
     const metadata = await sock.groupMetadata(event.id)
@@ -157,9 +156,9 @@ www.bmkg.go.id
     console.log("got chats", store.chats.all());
   });
 
-  sock.ev.on("contacts.set", () => {
-    console.log("got contacts", Object.values(store.contacts));
-  });
+  sock.ev.on('contacts.upsert', () => {
+    console.log('got contacts', Object.values(store.contacts))
+  })
 
   sock.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect, qr } = update || {};
