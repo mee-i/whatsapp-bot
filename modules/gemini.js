@@ -140,6 +140,9 @@ module.exports = {
 		details: {
 			gemini: {
 				description: `AI Gemini (${Config.Gemini.model})`
+			},
+			ai: {
+				description: `AI Gemini (${Config.Gemini.model})`
 			}
 		}
 	},
