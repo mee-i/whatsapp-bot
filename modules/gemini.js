@@ -29,16 +29,28 @@ function sleep(ms) {
 const safetySettings = [
 	{
 		category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-		threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+		threshold: HarmBlockThreshold.BLOCK_NONE,
 	},
 	{
 		category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-		threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+		threshold: HarmBlockThreshold.BLOCK_NONE,
 	},
+	{
+		category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+		threshold: HarmBlockThreshold.BLOCK_NONE
+	},
+	{
+		category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+		threshold: HarmBlockThreshold.BLOCK_NONE
+	},
+	{
+		category: HarmCategory.HARM_CATEGORY_UNSPECIFIED,
+		threshold: HarmBlockThreshold.BLOCK_NONE
+	}
 ];
 
 async function gemini(sock, msg, message) {
-	const sendmsg = await sock.sendMessage(msg?.key?.remoteJid, { text: "|" });
+	const sendmsg = await sock.sendMessage(msg?.key?.remoteJid, { text: "Tunggu bentar ya!" });
 	let loadingFrame = 0;
 	const worker = new Worker("./utilities/loading-worker.js");
 	worker.on("message", async (r) => {
@@ -84,11 +96,11 @@ async function gemini(sock, msg, message) {
 		safetySettings,
 		history: AIDatabase["gemini"]["userChat"][msg?.key?.remoteJid],
 	});
-
-	const result = await chatSession.sendMessage(message);
 	worker.terminate().catch((error) => {
 		console.error("Error stopping worker:", error);
 	});
+
+	const result = await chatSession.sendMessage(message);
 
 	fs.writeFileSync(
 		"./database/ai-database.json",
@@ -101,6 +113,51 @@ async function gemini(sock, msg, message) {
 		edit: sendmsg.key,
 	});
 }
+
+
+async function gemini_stream(sock, msg, message) {
+	const sendmsg = await sock.sendMessage(msg?.key?.remoteJid, { text: "..." }, { quoted: msg });
+	const Database = fs.readFileSync("./database/ai-database.json");
+
+	const AIDatabase = JSON.parse(Database);
+
+	if (!AIDatabase["gemini"]) {
+		AIDatabase["gemini"] = {
+			model,
+			userChat: {},
+		};
+	}
+	if (!AIDatabase["gemini"]["userChat"][msg?.key?.remoteJid])
+		AIDatabase["gemini"]["userChat"][msg?.key?.remoteJid] = [];
+
+	const chatSession = model.startChat({
+		generationConfig,
+		// safetySettings,
+		history: AIDatabase["gemini"]["userChat"][msg?.key?.remoteJid],
+	});
+	const result = await chatSession.sendMessageStream(message);
+
+	let resultText = "";
+	for await (const chunk of result.stream) {
+		resultText += chunk.text();
+		await sock.sendMessage(msg?.key?.remoteJid, {
+			text: resultText,
+			edit: sendmsg.key,
+		});
+	}
+
+	fs.writeFileSync(
+		"./database/ai-database.json",
+		JSON.stringify(AIDatabase, null, 4),
+		"utf8"
+	);
+	await sock.sendMessage(msg?.key?.remoteJid, {
+		text: resultText,
+		edit: sendmsg.key,
+	});
+}
+
+
 
 
 async function newchat(sock, msg) {
@@ -134,7 +191,8 @@ module.exports = {
 			fs.writeFileSync(DbFile, JSON.stringify({}), "utf-8");
 	},
 	newchat,
-	gemini,
+	gemini: async (a, b, message) => gemini_stream(a, b, message),
+	ai: async (a, b, message) => module.exports.gemini(a, b, message),
 	Config: {
 		menu: "AI",
 		details: {
