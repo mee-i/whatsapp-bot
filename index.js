@@ -21,6 +21,7 @@ store.readFromFile("./baileys_store.json");
 setInterval(() => {
   store.writeToFile("./baileys_store.json");
 }, 10_000);
+const groupCache = new NodeCache({stdTTL: 5 * 60, useClones: false})
 
 async function WhatsappEvent() {
   await LoadMenu();
@@ -31,13 +32,20 @@ async function WhatsappEvent() {
 		// shouldSyncHistoryMessage: false,
     // syncFullHistory: false,
     auth: state,
-    cachedGroupMetadata: (jid) => {
-      return store.fetchGroupMetadata(jid, sock);
-    },
-    getMessage: (message) => {
-      return store.loadMessage(message.remoteJid, message.id);
-    },
+    cachedGroupMetadata: async (jid) => groupCache.get(jid)
+    // getMessage: (message) => {
+    //   return store.loadMessage(message.remoteJid, message.id);
+    // },
   });
+  sock.ev.on('groups.update', async ([event]) => {
+    const metadata = await sock.groupMetadata(event.id)
+    groupCache.set(event.id, metadata)
+  })
+
+  sock.ev.on('group-participants.update', async (event) => {
+      const metadata = await sock.groupMetadata(event.id)
+      groupCache.set(event.id, metadata)
+  })
 
   const worker = new Worker("./utilities/earthquake-worker.js");
 
