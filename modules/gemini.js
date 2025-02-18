@@ -151,10 +151,15 @@ async function gemini_stream(sock, msg, message) {
 		JSON.stringify(AIDatabase, null, 4),
 		"utf8"
 	);
-	await sock.sendMessage(msg?.key?.remoteJid, {
-		text: resultText,
-		edit: sendmsg.key,
-	});
+	await sock.sendMessage(
+		msg?.key?.remoteJid,
+		{
+			react: {
+				text: '✅',
+				key: sendmsg.key
+			}
+		}
+	)
 }
 
 
