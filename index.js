@@ -15,6 +15,8 @@ const fs = require("node:fs");
 const { Worker } = require("node:worker_threads");
 const { LoadMenu } = require("./load-menu.js");
 const https = require("https");
+const NodeCache = require( "node-cache" );
+
 
 store.readFromFile("./baileys_store.json");
 
