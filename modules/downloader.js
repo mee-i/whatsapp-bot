@@ -177,14 +177,14 @@ Resolution: ${download.resolution || ""} ${download.fps + " fps " || " "}${
       console.error(e);
     }
   },
-	ytmp4: async ({a, b}, link) => module.exports.downloadmp4({a, b}, link),
-	ytmp3: async ({a, b}, link) => module.exports.downloadmp3({a, b}, link),
-	instagram: async ({a, b}, link) => module.exports.downloadmp4({a, b}, link),
-	ig: async ({a, b}, link) => module.exports.downloadmp4({a, b}, link),
-	igaudio: async ({a, b}, link) => module.exports.playaudio({a, b}, link),
-	tiktok: async ({a, b}, link) => module.exports.downloadmp4({a, b}, link),
-	tt: async ({a, b}, link) => module.exports.downloadmp4({a, b}, link),
-	ttaudio: async ({a, b}, link) => module.exports.playaudio({a, b}, link),
+	ytmp4: async ({sock, msg}, link) => module.exports.downloadmp4({sock, msg}, link),
+	ytmp3: async ({sock, msg}, link) => module.exports.downloadmp3({sock, msg}, link),
+	instagram: async ({sock, msg}, link) => module.exports.downloadmp4({sock, msg}, link),
+	ig: async ({sock, msg}, link) => module.exports.downloadmp4({sock, msg}, link),
+	igaudio: async ({sock, msg}, link) => module.exports.playaudio({sock, msg}, link),
+	tiktok: async ({sock, msg}, link) => module.exports.downloadmp4({sock, msg}, link),
+	tt: async ({sock, msg}, link) => module.exports.downloadmp4({sock, msg}, link),
+	ttaudio: async ({sock, msg}, link) => module.exports.playaudio({sock, msg}, link),
   Config: {
     menu: "Downloader",
     details: {
