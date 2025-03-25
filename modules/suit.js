@@ -11,7 +11,7 @@ function trimIndent(text) {
 }
 
 module.exports = {
-    suit: async (sock, msg, opsi) => {
+    suit: async ({sock, msg}, opsi) => {
         const rock = ["b", "batu", "r", "rock", "🪨", "🗿"];
         const paper = ["p", "paper", "kertas", "k", "📃", "📄"];
         const scissor = ["s", "scissor", "g", "gunting", "✂️"];

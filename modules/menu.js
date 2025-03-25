@@ -7,14 +7,16 @@ const {
 
 const db = require("../utilities/database.js");
 
-function getParameterNames(fn) {
-  const functionString = fn.toString();
-  const result = functionString.match(/\(([^)]*)\)/);
-  return result ? result[1].split(",").map((param) => param.trim()) : [];
+function getParameterNames(func) {
+  const fnStr = func.toString().replace(/\s+/g, ' ');
+  const result = fnStr.match(/^[^\(]*\(\s*([^\)]*)\)/);
+  return result && result[1]
+    ? result[1].split(',').map(param => param.trim())
+    : [];
 }
 
 module.exports = {
-  menu: async (sock, msg) => {
+  menu: async ({sock, msg}) => {
     const remoteJid = msg?.key?.participant ?? msg?.key?.remoteJid;
     const datafile = await db.Config.ReadConfig();
     const UserData = await db.UserData.Read(remoteJid);
@@ -85,7 +87,7 @@ List Menu:
       { quoted: msg }
     );
   },
-  help: async (sock, msg) => {
-    return module.exports.menu(sock, msg);
+  help: async (data) => {
+    return module.exports.menu(data);
   },
 };

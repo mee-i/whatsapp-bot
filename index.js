@@ -1,8 +1,8 @@
 const {
   DisconnectReason,
   useMultiFileAuthState,
-} = require("@whiskeysockets/baileys");
-const makeWASocket = require("@whiskeysockets/baileys").default;
+} = require("baileys");
+const makeWASocket = require("baileys").default;
 
 const WAEvents = require("./core/events.js");
 const store = require("./core/memory-store.js");

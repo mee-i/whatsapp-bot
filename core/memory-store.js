@@ -1,4 +1,4 @@
-const { makeInMemoryStore } = require('@whiskeysockets/baileys');
+const { makeInMemoryStore } = require('baileys');
 
 const store = makeInMemoryStore({});
 module.exports = store;

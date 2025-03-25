@@ -25,7 +25,7 @@ let iq = [
 ]
 
 module.exports = {
-    iqtest: async (sock, msg) => {
+    iqtest: async ({sock, msg}) => {
         let hasiliq = 0;
         if ((Math.random() < 0.5 ? 0 : 1) == 1)
             hasiliq = Math.floor(Math.random() * 10000);

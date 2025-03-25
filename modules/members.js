@@ -1,7 +1,7 @@
 const store = require("../core/memory-store.js");
 
 module.exports = {
-  members: async (sock, msg) => {
+  members: async ({sock, msg}) => {
     const groupdata = await store.fetchGroupMetadata(msg.key.remoteJid, sock);
     await sock.sendMessage(msg.key.remoteJid, {
       text: `

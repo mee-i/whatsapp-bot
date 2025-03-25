@@ -13,7 +13,7 @@ function formatUptime(seconds) {
 
 
 module.exports = {
-  system: async (sock, msg) => {
+  system: async ({sock, msg}) => {
       await sock.sendMessage(msg.key.remoteJid, {text: "Tunggu sebentar, mengambil informasi..."}); 
       const cpu = await si.cpu();
       const baseboard = await si.baseboard();

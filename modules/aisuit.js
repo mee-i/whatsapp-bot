@@ -32,7 +32,7 @@ const safetySettings = [
   },
 ];
 
-async function aisuit(sock, msg, opsi) {
+async function aisuit({sock, msg}, opsi) {
   const message = await sock.sendMessage(msg?.key?.remoteJid, { text: "Oke" }, { quoted: msg});
   const chatSession = model.startChat({
     generationConfig,

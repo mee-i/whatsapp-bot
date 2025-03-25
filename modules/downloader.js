@@ -18,7 +18,7 @@ module.exports = {
     const DirPath = "./media/downloads/";
     if (!fs.existsSync(DirPath)) fs.mkdirSync(DirPath, { recursive: true });
   },
-  downloadmp3: async (sock, msg, link) => {
+  downloadmp3: async ({sock, msg}, link) => {
     await sock.sendMessage(msg.key.remoteJid, {
       text: `*Downloading mp3*, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
     }, {quoted: msg});
@@ -71,7 +71,7 @@ Duration: ${formatSecond(download.duration)}`,
       console.error(e);
     }
   },
-  playaudio: async (sock, msg, link) => {
+  playaudio: async ({sock, msg}, link) => {
     await sock.sendMessage(msg.key.remoteJid, {
       text: `*Downloading mp3*, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
     }, {quoted: msg});
@@ -121,7 +121,7 @@ Duration: ${formatSecond(download.duration)}`,
       console.error(e);
     }
   },
-  downloadmp4: async (sock, msg, link) => {
+  downloadmp4: async ({sock, msg}, link) => {
     await sock.sendMessage(msg.key.remoteJid, {
       text: `*Downloading mp4*, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
     }, {quoted: msg});
@@ -177,14 +177,14 @@ Resolution: ${download.resolution || ""} ${download.fps + " fps " || " "}${
       console.error(e);
     }
   },
-	ytmp4: async (a, b, link) => module.exports.downloadmp4(a, b, link),
-	ytmp3: async (a, b, link) => module.exports.downloadmp3(a, b, link),
-	instagram: async (a, b, link) => module.exports.downloadmp4(a, b, link),
-	ig: async (a, b, link) => module.exports.downloadmp4(a, b, link),
-	igaudio: async (a, b, link) => module.exports.playaudio(a, b, link),
-	tiktok: async (a, b, link) => module.exports.downloadmp4(a, b, link),
-	tt: async (a, b, link) => module.exports.downloadmp4(a, b, link),
-	ttaudio: async (a, b, link) => module.exports.playaudio(a, b, link),
+	ytmp4: async ({a, b}, link) => module.exports.downloadmp4({a, b}, link),
+	ytmp3: async ({a, b}, link) => module.exports.downloadmp3({a, b}, link),
+	instagram: async ({a, b}, link) => module.exports.downloadmp4({a, b}, link),
+	ig: async ({a, b}, link) => module.exports.downloadmp4({a, b}, link),
+	igaudio: async ({a, b}, link) => module.exports.playaudio({a, b}, link),
+	tiktok: async ({a, b}, link) => module.exports.downloadmp4({a, b}, link),
+	tt: async ({a, b}, link) => module.exports.downloadmp4({a, b}, link),
+	ttaudio: async ({a, b}, link) => module.exports.playaudio({a, b}, link),
   Config: {
     menu: "Downloader",
     details: {

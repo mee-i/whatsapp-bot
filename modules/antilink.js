@@ -1,7 +1,7 @@
 const db = require("../utilities/database");
 
 module.exports = {
-  antilink: async (sock, msg) => {
+  antilink: async ({sock, msg}) => {
     const IsAntilink = await db.Config.IsAntiLinkEnabled(msg.key.remoteJid);
     if (IsAntilink) {
       const data = await db.Config.ReadConfig();

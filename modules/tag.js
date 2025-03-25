@@ -1,7 +1,7 @@
 const store = require('../core/memory-store.js');
 
 module.exports = {
-  everyone: async (sock, msg, message) => {
+  everyone: async ({sock, msg}, message) => {
     const groupdata = await store.fetchGroupMetadata(msg.key.remoteJid, sock);
     const mentions = [];
     for (const participant of groupdata.participants) {
@@ -9,7 +9,7 @@ module.exports = {
     }
     await sock.sendMessage(msg.key.remoteJid, { text: `@everyone ${message}`, mentions });
   },
-  tageveryone: async (sock, msg, message) => {
+  tageveryone: async ({sock, msg}, message) => {
     const groupdata = await store.fetchGroupMetadata(msg.key.remoteJid, sock);
     const mentions = [];
     for (const participant of groupdata.participants) {
@@ -20,7 +20,7 @@ module.exports = {
 ${message}
 `, mentions});
   },
-  hidetagall: async (sock, msg, message) => {
+  hidetagall: async ({sock, msg}, message) => {
     const groupdata = await store.fetchGroupMetadata(msg.key.remoteJid, sock);
     const mentions = [];
     for (const participant of groupdata.participants) {

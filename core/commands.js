@@ -10,12 +10,6 @@ function hasPrefix(command, prefixes) {
     return prefixes.some(prefix => command.startsWith(prefix));
 }
 
-function getParameterNames(fn) {
-    const functionString = fn.toString();
-    const result = functionString.match(/\(([^)]*)\)/);
-    return result ? result[1].split(',').map(param => param.trim()) : [];
-}
-
 function getCommandWithoutPrefix(command, prefixes) {
     for (const prefix of prefixes) {
         if (command.startsWith(prefix)) {
@@ -112,12 +106,11 @@ async function Command(command, isGroup, sock, data) {
         }
 
         const Func = FunctionCommand[CommandWithoutPrefix];
-        const Params = getParameterNames(Func);
-        const FuncParameterLength = Params.length - 2;
-        if ((Args.length - 1) < FuncParameterLength) {
+        const FuncParameterLength = Func.length - 1;
+        Args.shift();
+        if ((Args.length) < FuncParameterLength) {
             await sock.sendMessage(data?.key?.remoteJid, { text: "Need more arguments!"});
         } else {
-            Args.shift();
             if (FuncParameterLength === 1 && Args.length > 1) {
                 Args = [Args.join(" ")];
             }
@@ -136,7 +129,7 @@ async function Command(command, isGroup, sock, data) {
                 const checkUserdata = await db.UserData.Read(remoteJid)
                 if (!checkUserdata)
                     await sock.sendMessage(data?.key?.remoteJid, { text: "Anda belum terdaftar di database, kesalahan kode?? Tunggu sebentar" });
-                await Func(sock, data, ...Args);
+                await Func({sock, msg: data, isGroup}, ...Args);
             } catch (error) {
                 await sock.sendMessage(data?.key?.remoteJid, { text: "Caught an error, please report to owner /bug <message>"});
                 await sock.sendMessage(Config.Owner+"@s.whatsapp.net", { text: `[ERROR REPORT]

@@ -31,7 +31,7 @@ const safetySettings = [
   },
 ];
 
-async function motivasi(sock, msg) {
+async function motivasi({sock, msg}) {
   const message = await sock.sendMessage(msg?.key?.remoteJid, { text: "Sedang meracik motivasi..." }, { quoted: msg});
   const chatSession = model.startChat({
     generationConfig,
@@ -43,7 +43,7 @@ async function motivasi(sock, msg) {
   await sock.sendMessage(msg?.key?.remoteJid, { text: result.response.text(), edit: message.key });
 }
 
-async function katakata(sock, msg) {
+async function katakata({sock, msg}) {
   await sock.sendPresenceUpdate('composing', msg?.key?.remoteJid);
   const chatSession = model.startChat({
     generationConfig,
@@ -55,7 +55,7 @@ async function katakata(sock, msg) {
   await sock.sendMessage(msg?.key?.remoteJid, { text: result.response.text() }, { quoted: msg});
 }
 
-async function jokes(sock, msg) {
+async function jokes({sock, msg}) {
   await sock.sendPresenceUpdate('composing', msg?.key?.remoteJid);
   const chatSession = model.startChat({
     generationConfig,

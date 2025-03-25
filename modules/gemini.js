@@ -49,7 +49,7 @@ const safetySettings = [
 	}
 ];
 
-async function gemini(sock, msg, message) {
+async function gemini({sock, msg}, message) {
 	const sendmsg = await sock.sendMessage(msg?.key?.remoteJid, { text: "Tunggu bentar ya!" });
 	let loadingFrame = 0;
 	const worker = new Worker("./utilities/loading-worker.js");
@@ -115,7 +115,7 @@ async function gemini(sock, msg, message) {
 }
 
 
-async function gemini_stream(sock, msg, message) {
+async function gemini_stream({sock, msg}, message) {
 	const sendmsg = await sock.sendMessage(msg?.key?.remoteJid, { text: "..." }, { quoted: msg });
 	const Database = fs.readFileSync("./database/ai-database.json");
 
@@ -165,7 +165,7 @@ async function gemini_stream(sock, msg, message) {
 
 
 
-async function newchat(sock, msg) {
+async function newchat({sock, msg}) {
 	await sock.sendMessage(msg?.key?.remoteJid, { text: "Generating new chat..." });
 	const Database = fs.readFileSync("./database/ai-database.json");
 
@@ -196,8 +196,8 @@ module.exports = {
 			fs.writeFileSync(DbFile, JSON.stringify({}), "utf-8");
 	},
 	newchat,
-	gemini: async (a, b, message) => gemini_stream(a, b, message),
-	ai: async (a, b, message) => module.exports.gemini(a, b, message),
+	gemini: async ({sock, msg}, message) => gemini_stream({sock, msg}, message),
+	ai: async ({sock, msg}, message) => module.exports.gemini({sock, msg}, message),
 	Config: {
 		menu: "AI",
 		details: {

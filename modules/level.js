@@ -2,7 +2,7 @@ const db = require("../utilities/database");
 const xp = require("../utilities/xp");
 
 module.exports = {
-  level: async (sock, msg) => {
+  level: async ({sock, msg}) => {
     const remoteJid = msg.key.participant ?? msg.key.remoteJid;
     const UserData = await db.UserData.Read(remoteJid);
     const nextLevelXP = xp.baseXP * Math.pow(UserData.level + 1, 2);

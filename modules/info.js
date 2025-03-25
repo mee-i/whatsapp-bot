@@ -1,7 +1,7 @@
 const { FunctionCommand, Config } = require('../config.js');
 const { store } = require('../core/memory-store.js');
 module.exports = {
-    ping: async(sock, msg) => {
+    ping: async({sock, msg}) => {
         const startTime = Date.now();
     
         await sock.sendMessage(msg?.key?.remoteJid, {text: "..."});
@@ -10,7 +10,7 @@ module.exports = {
         const executionTime = endTime - startTime;
         await sock.sendMessage(msg?.key?.remoteJid, {text: "Pong " + executionTime + " ms!"});
     },
-    owner: async(sock, msg) => {
+    owner: async({sock, msg}) => {
         const vcard = 'BEGIN:VCARD\n' // metadata of the contact card
                 + 'VERSION:3.0\n' 
                 + 'FN:Ilham\n' // full name
@@ -28,21 +28,21 @@ module.exports = {
             }
         );
     },
-    totalmenu: async (sock, msg) => {
+    totalmenu: async ({sock, msg}) => {
         let total = 0;
         Object.keys(FunctionCommand).forEach(key => {
             total++;
         });
         await sock.sendMessage(msg?.key?.remoteJid, { text: "Total fitur saat ini adalah " + total });
     },
-    bug: async (sock, msg, message) => {
+    bug: async ({sock, msg}, message) => {
         await sock.sendMessage(`${Config.Owner}@s.whatsapp.net`, { text: `[BUG REPORT]
 From: *${msg.pushName}*
 Jid: *${msg.key.remoteJid}*
 Pesan: _${message}_`});
         await sock.sendMessage(msg?.key?.remoteJid, { text: "Pesan telah dikirim kepada owner bot!" });
     },
-    report: async (a, b, message) => module.exports.bug(a, b, message),
+    report: async ({sock, msg}, message) => module.exports.bug({sock, msg}, message),
     Config: {
         menu: "Info"
     }
