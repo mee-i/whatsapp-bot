@@ -18,6 +18,8 @@ A simple and customizable WhatsApp bot built using the [`@WhiskeySockets/Baileys
 - [x] Youtube, instagram, tiktok, any website, downloader
 - [x] AI Chat bot
 - [x] Earthquake Notification
+- [ ] Implement SQL Auth
+- [ ] Create a install script
 - [ ] Add more features upto 100++
 
 ## Installation
