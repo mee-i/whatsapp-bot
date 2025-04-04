@@ -24,25 +24,26 @@ A simple and customizable WhatsApp bot built using the [`@WhiskeySockets/Baileys
 
 ## Installation
 
-1. Install NodeJS, Git:
+1. Install Bun, Git:
 
    ```bash
-   sudo apt install nodejs git
+   sudo apt install git
+   curl -fsSL https://bun.sh/install | bash # for macOS, Linux, and WSL
    ```
 2. Clone Repository:
    ```bash
    git clone https://github.com/mee-i/whatsapp-bot
    ```
-3. Open Whatsapp-Bot-JS Folder:
+3. Open Whatsapp-Bot Folder:
    ```bash
    cd whatsapp-bot
    ```
 4. Install Library Using npm
    ```bash
-   npm i
+   bun install
    ```
 5. Run Whatsapp bot
    ```bash
-   node .
+   bun run index.js
    ```
 6. Scan QR Code In Terminal
