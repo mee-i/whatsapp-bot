@@ -2,6 +2,7 @@ const { chromium } = require('playwright');
 const { writeFile } = require('fs/promises');
 const fs = require('fs');
 const ffmpeg = require('fluent-ffmpeg');
+const { Config } = require('../config.js');
 /**
  * Generate a brat image with custom text and dimensions
  * @param {string} text - Text to render
@@ -84,6 +85,7 @@ module.exports = {
                         url: `./media/downloads/${id}.webp`,
                     },
                     isAnimated: false,
+                    ...Config.Sticker,
                 },
                 {
                     quoted: msg,

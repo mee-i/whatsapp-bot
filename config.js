@@ -6,6 +6,10 @@ const Config = {
   CurrentNumber: "6281220533069",
 
   ReadMessage: true,
+  Sticker: {
+    packname: "Sticker by MeeI Bot",
+    author: "MeeI Bot",
+  }
 };
 
 const FunctionCommand = {};
