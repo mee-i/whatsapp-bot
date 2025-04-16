@@ -85,7 +85,8 @@ module.exports = {
                         url: `./media/downloads/${id}.webp`,
                     },
                     isAnimated: false,
-                    ...Config.Sticker,
+                    packname: "abc",
+                    author: "def",
                 },
                 {
                     quoted: msg,
