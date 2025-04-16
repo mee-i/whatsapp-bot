@@ -60,11 +60,13 @@ module.exports = {
 
         try {
             const id = await BratGenerator(text, 500, 500);
+            const buff = await fs.readFileSync(`./media/downloads/${id}.png`);
+            const buffer = Buffer.from(buff, "base64");
             await sock.sendMessage(
                 msg.key.remoteJid,
                 {
                     sticker: {
-                        stream: fs.createReadStream(`./media/downloads/${id}.png`),
+                        buffer,
                     },
                     isAnimated: false,
                 },
