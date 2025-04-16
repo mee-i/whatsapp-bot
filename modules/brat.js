@@ -79,5 +79,31 @@ module.exports = {
             });
             console.error(e);
         }
+    },
+    testbrat: async ({ sock, msg }) => {
+        await sock.sendMessage(msg.key.remoteJid, {
+            text: `*Generating brat image*`,
+        }, { quoted: msg });
+
+        try {
+            // const id = await BratGenerator("test", 500, 500);
+            await sock.sendMessage(
+                msg.key.remoteJid,
+                {
+                    sticker: {
+                        url: "./media/downloads/brat_m9jzqs4lgerfwj.png",
+                    },
+                    isAnimated: false,
+                },
+                {
+                    quoted: msg,
+                }
+            );
+        } catch (e) {
+            await sock.sendMessage(msg.key.remoteJid, {
+                text: "Caught an error! do you send link correctly?",
+            });
+            console.error(e);
+        }
     }
 };
