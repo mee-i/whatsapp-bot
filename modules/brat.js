@@ -60,8 +60,7 @@ module.exports = {
 
         try {
             const id = await BratGenerator(text, 500, 500);
-            const buff = await fs.readFileSync(`./media/downloads/${id}.png`);
-            const buffer = Buffer.from(buff, "base64");
+            const buffer = await fs.readFileSync(`./media/downloads/${id}.png`);
             await sock.sendMessage(
                 msg.key.remoteJid,
                 {
