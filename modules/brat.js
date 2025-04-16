@@ -1,5 +1,5 @@
-import { chromium } from 'playwright';
-import { writeFile } from 'fs/promises';
+const { chromium } = require('playwright');
+const { writeFile } = require('fs/promises');
 
 /**
  * Generate a brat image with custom text and dimensions
