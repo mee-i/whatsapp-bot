@@ -18,9 +18,9 @@ A simple and customizable WhatsApp bot built using the [`@WhiskeySockets/Baileys
 - [x] Youtube, instagram, tiktok, any website, downloader
 - [x] AI Chat bot
 - [x] Earthquake Notification
-- [ ] Implement SQL Auth
-- [ ] Create a install script
-- [ ] Add more features upto 100++
+- [x] Implement SQL Auth
+- [x] Create a install script
+- [ ] Add more features up to 100++
 
 ## Installation
 
@@ -47,3 +47,12 @@ A simple and customizable WhatsApp bot built using the [`@WhiskeySockets/Baileys
    bun run index.js
    ```
 6. Scan QR Code In Terminal
+
+# Linux Setup (Download newest yt-dlp for downloader and setup MySQL Database & table)
+## Current Distro support: Ubuntu
+```bash
+bash linux_setup.sh
+```
+
+# Windows Setup
+## Later :)
