@@ -65,7 +65,7 @@ module.exports = {
                 msg.key.remoteJid,
                 {
                     sticker: {
-                        buffer,
+                        url: buffer,
                     },
                     isAnimated: false,
                 },
