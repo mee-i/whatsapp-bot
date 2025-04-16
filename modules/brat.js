@@ -64,7 +64,7 @@ module.exports = {
                 msg.key.remoteJid,
                 {
                     sticker: {
-                        url: `./media/downloads/${id}.png`,
+                        stream: fs.createReadStream(`./media/downloads/${id}.png`),
                     },
                     isAnimated: false,
                 },
