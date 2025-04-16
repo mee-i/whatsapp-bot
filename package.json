@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start": "bun run index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "type": "commonjs",
@@ -11,20 +12,21 @@
   "description": "",
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
-    "axios": "^1.8.2",
+    "axios": "^1.8.4",
     "baileys": "^6.7.16",
     "chalk": "^5.4.1",
-    "dotenv": "^16.4.7",
-    "figlet": "^1.8.0",
+    "dotenv": "^16.5.0",
+    "figlet": "^1.8.1",
+    "mysql-baileys": "^1.5.1",
     "node-cache": "^5.1.2",
     "qrcode-terminal": "^0.12.0",
     "sharp": "^0.33.5",
     "systeminformation": "^5.25.11",
     "uuid": "^11.1.0",
-    "youtube-dl-exec": "^3.0.19"
+    "youtube-dl-exec": "^3.0.20"
   },
   "devDependencies": {
-    "@types/bun": "^1.2.6"
+    "@types/bun": "^1.2.9"
   },
   "peerDependencies": {
     "typescript": "^5.7.2"

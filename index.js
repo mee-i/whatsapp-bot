@@ -1,150 +1,70 @@
 const {
   DisconnectReason,
-  useMultiFileAuthState,
+  makeCacheableSignalKeyStore, fetchLatestBaileysVersion, makeWASocket
 } = require("baileys");
-const makeWASocket = require("baileys").default;
 
 const WAEvents = require("./core/events.js");
 const store = require("./core/memory-store.js");
-
 const colors = require("./utilities/colors.js");
 const Terminal = require("./utilities/terminal.js");
+const earthquake = require("./utilities/earthquake-handler.js");
 
 const figlet = require("figlet");
-const fs = require("node:fs");
 const { Worker } = require("node:worker_threads");
 const { LoadMenu } = require("./load-menu.js");
-const https = require("https");
-const NodeCache = require( "node-cache" );
-
-
+const NodeCache = require("node-cache");
+const { useMySQLAuthState } = require('mysql-baileys');
+const pino = require("pino");
+const logger = pino({});
 store.readFromFile("./baileys_store.json");
 
 setInterval(() => {
   store.writeToFile("./baileys_store.json");
 }, 10_000);
-const groupCache = new NodeCache({stdTTL: 5 * 60, useClones: false})
+const groupCache = new NodeCache({ stdTTL: 5 * 60, useClones: false })
 
 async function WhatsappEvent() {
   await LoadMenu();
-  const { state, saveCreds } = await useMultiFileAuthState("auth_info_baileys");
-  const sock = makeWASocket({
-    // can provide additional config here
-    printQRInTerminal: true,
-		// shouldSyncHistoryMessage: false,
-    // syncFullHistory: false,
-    auth: state,
-    cachedGroupMetadata: async (jid) => groupCache.get(jid),
-    // getMessage: async (key) => await getMessageFromStore(key)
-    getMessage: async (message) => await store.loadMessage(message.remoteJid, message.id),
+  const { error, version } = await fetchLatestBaileysVersion()
+  if (error) {
+    console.error("Error fetching latest Baileys version:", error);
+    return WhatsappEvent();
+  }
+  const { state, saveCreds } = await useMySQLAuthState({
+    session: "session_1",
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    host: process.env.MYSQL_HOST,
+    port: process.env.MYSQL_PORT,
+    database: process.env.MYSQL_DATABASE,
+    tableName: "auth"
   });
+  const sock = makeWASocket({
+    printQRInTerminal: true,
+    auth: {
+      creds: state.creds,
+      keys: makeCacheableSignalKeyStore(state.keys, logger),
+    },
+    version,
+    cachedGroupMetadata: async (jid) => groupCache.get(jid),
+    getMessage: async (message) => await store.loadMessage(message.remoteJid, message.id),
+    defaultQueryTimeoutMs: undefined
+  });
+
   sock.ev.on('groups.update', async ([event]) => {
     const metadata = await sock.groupMetadata(event.id)
     groupCache.set(event.id, metadata)
   })
 
   sock.ev.on('group-participants.update', async (event) => {
-      const metadata = await sock.groupMetadata(event.id)
-      groupCache.set(event.id, metadata)
+    const metadata = await sock.groupMetadata(event.id)
+    groupCache.set(event.id, metadata)
   })
 
   const worker = new Worker("./utilities/earthquake-worker.js");
 
   worker.on("message", async (data) => {
-    if (!data?.Infogempa?.gempa) {
-      console.log("\n\nNoGempaFound\n\n\n");
-      return;
-    }
-    const DbFile = "./database/earthquake.json";
-    if (!fs.existsSync(DbFile))
-      fs.writeFileSync(DbFile, JSON.stringify({}), "utf-8");
-    const Database = fs.readFileSync(DbFile);
-
-    const EarthquakeDB = JSON.parse(Database);
-    if (!EarthquakeDB["MessageNotification"])
-      EarthquakeDB["MessageNotification"] = [];
-
-    if (!EarthquakeDB["Earthquake"]) EarthquakeDB["Earthquake"] = [];
-
-    const isExist = EarthquakeDB["Earthquake"].find(
-      (quake) => quake.DateTime === data?.Infogempa?.gempa?.DateTime
-    );
-
-    if (!isExist) {
-      const gempa = data?.Infogempa?.gempa;
-      const ShakemapURL = `https://data.bmkg.go.id/DataMKG/TEWS/${gempa?.Shakemap}`;
-
-      const res = await fetch(ShakemapURL);
-      if (!res.ok)
-        await sock.sendMessage(
-          `${Config.Owner}@s.whatsapp.net`,
-          `Failed to fetch image: ${res.statusText}`
-        );
-      const dir = "./database/Shakemap";
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      const file = fs.createWriteStream(
-        `./database/Shakemap/${gempa?.Shakemap}`
-      );
-      let isDownloadComplete = false;
-      const request = https.get(ShakemapURL, async function (response) {
-        response.pipe(file);
-
-        // after download completed close filestream
-        file.on("finish", async () => {
-          file.close();
-          isDownloadComplete = true;
-          // await sock.sendMessage(Config.Owner + "@s.whatsapp.net", {text: "Downloaded"});
-        });
-      });
-
-      if (!EarthquakeDB["MessageNotification"])
-        EarthquakeDB["MessageNotification"] = [];
-      else {
-        EarthquakeDB["MessageNotification"].forEach(async (element) => {
-          //const InArea = gempa?.Dirasakan.toLowerCase().includes(element?.wilayah.toLowerCase());
-          const InArea = gempa?.Dirasakan.toLowerCase().match(
-            new RegExp(
-              "(\\W|^)" + (element?.wilayah.toLowerCase() ?? "") + "(\\W|$)",
-              "i"
-            )
-          );
-          if (InArea !== null || element?.wilayah == "*") {
-            let EarthquakeMessage = `**WARNING!**
---> Notifikasi Gempa <--
-Jam: ${gempa?.Jam}
-Koordinat: ${gempa?.Coordinates}
-Magnitude: ${gempa?.Magnitude}
-sKedalaman: ${gempa?.Kedalaman}
-Wilayah: ${gempa?.Wilayah}
-Potensi: ${gempa?.Potensi}
-Dirasakan: ${gempa?.Dirasakan}
-
-www.bmkg.go.id
-                        `;
-            await new Promise((resolve) => {
-              const checkInterval = setInterval(() => {
-                if (isDownloadComplete) {
-                  clearInterval(checkInterval); // Stop interval saat boolean true
-                  resolve(); // Lanjutkan proses setelah boolean true
-                }
-              }, 50);
-            });
-            await sock.sendMessage(element.id, {
-              image: { url: `./database/Shakemap/${gempa?.Shakemap}` },
-              caption: EarthquakeMessage,
-            });
-          }
-        });
-      }
-      EarthquakeDB["Earthquake"].push(data?.Infogempa?.gempa);
-    }
-    fs.writeFileSync(
-      "./database/earthquake.json",
-      JSON.stringify(EarthquakeDB, null, 4),
-      "utf8"
-    );
+    earthquake.handler(data, sock);
   });
 
   // Handle errors
@@ -211,4 +131,5 @@ figlet("MeeI-Bot", (err, data) => {
   console.log(colors.FgGreen + data + colors.Reset);
 });
 
+console.log("Starting Bot...");
 await WhatsappEvent();
