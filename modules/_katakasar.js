@@ -36,8 +36,7 @@ module.exports = {
             "arse",
             "bloody",
             "bollocks",
-            "wanker",
-            "git"
+            "wanker"
         ];
         for (const kata of katakasar)
             if (text.toLowerCase().includes(` ${kata} `) || text.toLowerCase() == kata) {

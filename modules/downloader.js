@@ -1,5 +1,6 @@
+
 const { create: createYoutubeDl } = require("youtube-dl-exec");
-const downloader = createYoutubeDl("yt-dlp");
+const downloader = createYoutubeDl(process.env.YTDL_PATH || "yt-dlp");
 const fs = require("fs");
 const { v7: uuidv7 } = require("uuid");
 
