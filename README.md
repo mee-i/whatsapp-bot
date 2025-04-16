@@ -51,7 +51,7 @@ A simple and customizable WhatsApp bot built using the [`@WhiskeySockets/Baileys
 # Linux Setup (Download newest yt-dlp for downloader and setup MySQL Database & table)
 ## Current Distro support: Ubuntu
 ```bash
-bash linux_setup.sh
+sudo bash linux_setup.sh
 ```
 
 # Windows Setup
