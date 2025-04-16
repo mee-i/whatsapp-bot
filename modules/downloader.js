@@ -4,6 +4,18 @@ const downloader = createYoutubeDl(process.env.YTDL_PATH || "yt-dlp");
 const fs = require("fs");
 const { v7: uuidv7 } = require("uuid");
 
+// IMPORTANT: If you using VPS you maybe need to use cookies in yt-dlp
+// READ: https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp
+// SET YTDL_COOKIES in .env file (path to cookies.txt)
+// example: YTDL_COOKIES=./cookies.txt
+// cookies.txt should be netscape format
+const cookies = process.env.YTDL_COOKIES || null; // Set cookies if needed
+
+function isYouTubeLink(url) {
+  const regex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+  return regex.test(url);
+}
+
 function formatSecond(second) {
   const minute = Math.floor(second / 60);
   const esecond = second % 60;
@@ -36,7 +48,8 @@ module.exports = {
         output: `./media/downloads/${uuid}.%(ext)s`,
         noCheckCertificates: true,
         noWarnings: true,
-        addHeader: ["referer:youtube.com", "user-agent:googlebot"],
+        // addHeader: ["referer:youtube.com", "user-agent:googlebot"],
+        cookies: isYouTubeLink(link) ? cookies : null,
       });
       const download = JSON.parse(exec.stdout);
 
@@ -89,7 +102,8 @@ Duration: ${formatSecond(download.duration)}`,
         output: `./media/downloads/${uuid}.%(ext)s`,
         noCheckCertificates: true,
         noWarnings: true,
-        addHeader: ["referer:youtube.com", "user-agent:googlebot"],
+        // addHeader: ["referer:youtube.com", "user-agent:googlebot"],
+        cookies: isYouTubeLink(link) ? cookies : null,
       });
 
       const download = JSON.parse(exec.stdout);
@@ -138,7 +152,8 @@ Duration: ${formatSecond(download.duration)}`,
         output: `./media/downloads/${uuid}.%(ext)s`,
         noCheckCertificates: true,
         noWarnings: true,
-        addHeader: ["referer:youtube.com", "user-agent:googlebot"],
+        // addHeader: ["referer:youtube.com", "user-agent:googlebot"],
+        cookies: isYouTubeLink(link) ? cookies : null,
       });
       await sock.sendMessage(
         msg.key.remoteJid,
