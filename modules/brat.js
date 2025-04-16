@@ -1,6 +1,7 @@
 const { chromium } = require('playwright');
 const { writeFile } = require('fs/promises');
 const fs = require('fs');
+const ffmpeg = require('fluent-ffmpeg');
 /**
  * Generate a brat image with custom text and dimensions
  * @param {string} text - Text to render
@@ -51,6 +52,21 @@ async function BratGenerator(text, width = 500, height = 500) {
     return id;
 }
 
+function convertPngToWebp(inputPath, outputPath) {
+    return new Promise((resolve, reject) => {
+        ffmpeg(inputPath)
+            .outputOptions([
+                '-vcodec libwebp',
+                '-lossless 1',
+                '-qscale 80',
+                '-preset default',
+            ])
+            .toFormat('webp')
+            .save(outputPath)
+            .on('end', () => resolve(outputPath))
+            .on('error', (err) => reject(err));
+    });
+}
 
 module.exports = {
     brat: async ({ sock, msg }, text) => {
@@ -60,12 +76,12 @@ module.exports = {
 
         try {
             const id = await BratGenerator(text, 500, 500);
-            const buffer = await fs.readFileSync(`./media/downloads/${id}.png`);
+            await convertPngToWebp(`./media/downloads/${id}.png`, `./media/downloads/${id}.webp`);
             await sock.sendMessage(
                 msg.key.remoteJid,
                 {
                     sticker: {
-                        url: buffer,
+                        url: `./media/downloads/${id}.webp`,
                     },
                     isAnimated: false,
                 },
@@ -80,30 +96,4 @@ module.exports = {
             console.error(e);
         }
     },
-    testbrat: async ({ sock, msg }) => {
-        await sock.sendMessage(msg.key.remoteJid, {
-            text: `*Generating brat image*`,
-        }, { quoted: msg });
-
-        try {
-            // const id = await BratGenerator("test", 500, 500);
-            await sock.sendMessage(
-                msg.key.remoteJid,
-                {
-                    sticker: {
-                        url: "./media/downloads/brat_m9jzqs4lgerfwj.png",
-                    },
-                    isAnimated: false,
-                },
-                {
-                    quoted: msg,
-                }
-            );
-        } catch (e) {
-            await sock.sendMessage(msg.key.remoteJid, {
-                text: "Caught an error! do you send link correctly?",
-            });
-            console.error(e);
-        }
-    }
 };
