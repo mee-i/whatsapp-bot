@@ -47,7 +47,32 @@ async function WhatsappEvent() {
     },
     version,
     cachedGroupMetadata: async (jid) => groupCache.get(jid),
-    getMessage: async (message) => await store.loadMessage(message.remoteJid, message.id),
+    getMessage: async (key) => {
+      const data = await store.loadMessage(key.remoteJid, key.id);
+      return data?.message || undefined;
+    },
+    patchMessageBeforeSending: (message) => {
+      const requiresPatch = !!(
+        message.buttonsMessage
+        || message.templateMessage
+        || message.listMessage
+      );
+      if (requiresPatch) {
+        message = {
+          viewOnceMessage: {
+            message: {
+              messageContextInfo: {
+                deviceListMetadataVersion: 2,
+                deviceListMetadata: {},
+              },
+              ...message,
+            },
+          },
+        };
+      }
+  
+      return message;
+    },
     defaultQueryTimeoutMs: undefined
   });
 

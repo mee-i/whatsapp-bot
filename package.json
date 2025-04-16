@@ -19,6 +19,7 @@
     "figlet": "^1.8.1",
     "mysql-baileys": "^1.5.1",
     "node-cache": "^5.1.2",
+    "playwright": "^1.51.1",
     "qrcode-terminal": "^0.12.0",
     "sharp": "^0.33.5",
     "systeminformation": "^5.25.11",
