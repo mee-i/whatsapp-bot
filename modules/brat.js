@@ -1,6 +1,6 @@
 const { chromium } = require('playwright');
 const { writeFile } = require('fs/promises');
-
+const fs = require('fs');
 /**
  * Generate a brat image with custom text and dimensions
  * @param {string} text - Text to render
