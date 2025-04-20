@@ -63,7 +63,7 @@ async function jokes({sock, msg}) {
     history: [],
   });
   
-  const result = await chatSession.sendMessage("Berikan saya satu humor puns ngakak indonesia");
+  const result = await chatSession.sendMessage("Berikan saya satu humor puns ngakak indonesia, jawab dengan humor jangan dengan kata-kata lain");
   await sock.sendMessage(msg?.key?.remoteJid, { text: result.response.text()}, {quoted: msg});
 }
 

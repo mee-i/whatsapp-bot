@@ -1,6 +1,7 @@
 
 const fs = require("fs");
 const https = require("https");
+const store = require("../core/memory-store.js");
 
 module.exports = {
     handler: async (data, sock) => {
@@ -84,9 +85,15 @@ module.exports = {
                                 }
                             }, 50);
                         });
+                        const groupdata = await store.fetchGroupMetadata(element.id, sock);
+                        const mentions = [];
+                        for (const participant of groupdata.participants) {
+                            mentions.push(participant.id);
+                        }
                         await sock.sendMessage(element.id, {
                             image: { url: `./database/Shakemap/${gempa?.Shakemap}` },
                             caption: EarthquakeMessage,
+                            mentions
                         });
                     }
                 });

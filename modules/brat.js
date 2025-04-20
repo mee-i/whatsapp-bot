@@ -85,8 +85,6 @@ module.exports = {
                         url: `./media/downloads/${id}.webp`,
                     },
                     isAnimated: false,
-                    packname: "abc",
-                    author: "def",
                 },
                 {
                     quoted: msg,
@@ -94,9 +92,17 @@ module.exports = {
             );
         } catch (e) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: "Caught an error! do you send link correctly?",
+                text: "Caught an error! Please try again later.",
             });
             console.error(e);
         }
     },
+    Config: {
+        menu: "Sticker",
+        details: {
+            brat: {
+                description: "Generate a brat image with custom text",
+            },
+        },
+    }
 };
