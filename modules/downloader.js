@@ -109,7 +109,7 @@ Duration: ${formatSecond(download.duration)}`,
       const download = JSON.parse(exec.stdout);
       await sock.sendMessage(
         msg.key.remoteJid,
-        { text: "Download Selesai. Mengirim video..." },
+        { text: "Download Selesai. Mengirim audio..." },
         { quoted: msg }
       );
 

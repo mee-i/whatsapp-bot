@@ -3,6 +3,8 @@ const {
   makeCacheableSignalKeyStore, fetchLatestBaileysVersion, makeWASocket
 } = require("baileys");
 
+const QRCode = require("qrcode");
+
 const WAEvents = require("./core/events.js");
 const store = require("./core/memory-store.js");
 const colors = require("./utilities/colors.js");
@@ -40,7 +42,6 @@ async function WhatsappEvent() {
     tableName: "auth"
   });
   const sock = makeWASocket({
-    printQRInTerminal: true,
     auth: {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, logger),
@@ -110,7 +111,7 @@ async function WhatsappEvent() {
   sock.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect, qr } = update || {};
     if (qr) {
-      console.log(qr);
+      console.log(await QRCode.toString(qr, {type:'terminal'}))
     }
 
     if (connection === "close") {

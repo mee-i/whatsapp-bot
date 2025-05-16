@@ -1,7 +1,7 @@
 const Config = {
   BotName: "MeeI Bot",
-  Owner: "6281220533069",
-  Admin: [],
+  Owner: "6289517396474",
+  Admin: ["6289517396474"],
   AIMessage: [],
   CurrentNumber: "6281220533069",
 
