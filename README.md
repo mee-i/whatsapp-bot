@@ -11,6 +11,14 @@ A simple and customizable WhatsApp bot built using the [`@WhiskeySockets/Baileys
 - Eathquake Notification (Using bmkg api)
 
 ---
+## How to use Bot
+### Enable the bot
+First you need change the owner in config.js
+then chat to bot or group that the bot joined
+```
+/enablebot
+```
+---
 
 ## TODO
 - [x] Make it easy to create command with function
