@@ -4,7 +4,14 @@
   "main": "index.js",
   "scripts": {
     "start": "bun run index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "pm2 start \"bun run start\" --name bot",
+    "stop": "pm2 stop bot",
+    "restart": "pm2 restart bot",
+    "logs": "pm2 logs bot",
+    "update": "git pull && bun install && pm2 restart bot",
+    "build": "bun build index.js --outdir=dist",
+    "compile": "bun build index.js --compile --outfile=bot"
   },
   "type": "commonjs",
   "author": "Mee-I",
