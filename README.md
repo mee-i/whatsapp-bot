@@ -18,6 +18,10 @@ then chat to bot or group that the bot joined
 ```
 /enablebot
 ```
+you can disable with
+```
+/disablebot
+```
 ---
 
 ## TODO
