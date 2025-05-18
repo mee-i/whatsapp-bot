@@ -41,13 +41,6 @@ BG_MAGENTA='\e[45m'
 BG_CYAN='\e[46m'
 BG_WHITE='\e[47m'
 
-if [ "$EUID" -ne 0 ]; then
-    echo -e "[⚠️] ${RED}This script requires root. Please run it using sudo${RESET}"
-    exit 1
-fi
-
-echo -e "[✅] ${GREEN}Running as root...${RESET}"
-
 if [ -f /etc/os-release ]; then
     . /etc/os-release
 else
