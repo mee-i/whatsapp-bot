@@ -209,12 +209,20 @@ EOF
         exit 1
     fi
 
-    if ! $JS_RUNTIME_X playwright install; then
+    if ! $JS_RUNTIME_X playwright install --with-deps; then
         echo -e "[❌] ${RED}Failed to install playwright dependencies. Please check the error message above.${RESET}"
         echo -e "[ℹ️] ${CYAN}You can install the dependencies manually using the command: $JS_RUNTIME_X playwright install${RESET}"
     fi
 
     echo -e "[✅] ${GREEN}Dependencies installed successfully${RESET}"
+
+    echo -e "[🔄️] ${MAGENTA}Creating database directory...${RESET}"
+    if ! mkdir database; then
+        echo -e "[❌] ${RED}Failed to create database directory. Please check your permissions.${RESET}"
+        exit 1
+    fi
+    echo -e "[✅] ${GREEN}Database directory created${RESET}"
+    sleep 2
     echo -e "[✅] ${GREEN}Setup completed successfully${RESET}"
     echo -e "[ℹ️] ${CYAN}You can now run the bot using the command: $JS_RUNTIME run start${RESET}"
 
