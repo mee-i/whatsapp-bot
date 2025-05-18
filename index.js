@@ -113,7 +113,7 @@ async function WhatsappEvent() {
   sock.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect, qr } = update || {};
     if (qr) {
-      console.log(await QRCode.toString(qr, {type:'terminal', scale: 1}));
+      console.log(await QRCode.toString(qr, {type:'terminal', small: true, scale: 1}));
     }
 
     if (connection === "open") {
