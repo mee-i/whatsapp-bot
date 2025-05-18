@@ -98,7 +98,7 @@ if [ "$ID" = "ubuntu" ]; then
     fi
 
     echo -e "[🔄️] ${MAGENTA}Installing mysql-server...${RESET}"
-    if ! apt install mysql-server -y; then
+    if ! sudo apt install mysql-server -y; then
         echo -e "[❌] ${RED}Failed to install mysql-server. Please check your internet connection or package manager.${RESET}"
         exit 1
     else
@@ -106,22 +106,22 @@ if [ "$ID" = "ubuntu" ]; then
     fi
 
     # Create database and user with proper grants
-    if ! mysql -h localhost -u root -e "CREATE DATABASE IF NOT EXISTS \`$MYSQL_DATABASE\`;"; then
+    if ! sudo mysql -h localhost -u root -e "CREATE DATABASE IF NOT EXISTS \`$MYSQL_DATABASE\`;"; then
         echo -e "[❌] ${RED}Failed to create database. Please check your MySQL server.${RESET}"
         exit 1
     fi
 
-    if ! mysql -h localhost -u root -e "CREATE USER IF NOT EXISTS '$MYSQL_USER'@'localhost' IDENTIFIED BY '$MYSQL_PASSWORD';"; then
+    if ! sudo mysql -h localhost -u root -e "CREATE USER IF NOT EXISTS '$MYSQL_USER'@'localhost' IDENTIFIED BY '$MYSQL_PASSWORD';"; then
         echo -e "[❌] ${RED}Failed to create user. Please check your MySQL server.${RESET}"
         exit 1
     fi
 
-    if ! mysql -h localhost -u root -e "GRANT ALL PRIVILEGES ON \`$MYSQL_DATABASE\`.* TO '$MYSQL_USER'@'localhost';"; then
+    if ! sudo mysql -h localhost -u root -e "GRANT ALL PRIVILEGES ON \`$MYSQL_DATABASE\`.* TO '$MYSQL_USER'@'localhost';"; then
         echo -e "[❌] ${RED}Failed to grant privileges. Please check your MySQL server.${RESET}"
         exit 1
     fi
 
-    if ! mysql -h localhost -u root -e "FLUSH PRIVILEGES;"; then
+    if ! sudo mysql -h localhost -u root -e "FLUSH PRIVILEGES;"; then
         echo -e "[❌] ${RED}Failed to flush privileges. Please check your MySQL server.${RESET}"
         exit 1
     fi
@@ -136,7 +136,7 @@ if [ "$ID" = "ubuntu" ]; then
     KEY idxid (id)
 ) ENGINE=MyISAM;"
 
-    if ! mysql -h localhost -u root -D "$MYSQL_DATABASE" -e "$CREATE_TABLE_AUTH"; then
+    if ! sudo mysql -h localhost -u root -D "$MYSQL_DATABASE" -e "$CREATE_TABLE_AUTH"; then
         echo -e "[❌] ${RED}Failed to create table auth. Please check your MySQL server.${RESET}"
         exit 1
     fi
@@ -162,7 +162,7 @@ if [ "$ID" = "ubuntu" ]; then
     fi
 
     echo -e "[🔄️] ${MAGENTA}Installing ffmpeg...${RESET}"
-    if ! apt install ffmpeg -y; then
+    if ! sudo apt install ffmpeg -y; then
         echo -e "[❌] ${RED}Failed to install ffmpeg. Please check your internet connection or package manager.${RESET}"
         exit 1
     fi
