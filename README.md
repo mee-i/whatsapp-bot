@@ -1,4 +1,8 @@
-# WhatsApp Bot
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/9f06743d-cb9a-4952-a239-63b04a32eb6a" alt="Meei Whatsapp Bot GIF" />
+</p>
+
+# MeeI WhatsApp Bot
 A simple and customizable WhatsApp bot built using the [`@WhiskeySockets/Baileys`](https://github.com/WhiskeySockets/baileys) library. This bot allows you to automate responses, create commands, and interact with WhatsApp users programmatically.
 ---
 
