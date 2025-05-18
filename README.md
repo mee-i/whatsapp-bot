@@ -40,15 +40,7 @@ A simple and customizable WhatsApp bot built using the [`@WhiskeySockets/Baileys
    ```bash
    cd whatsapp-bot
    ```
-4. Install Library Using npm
-   ```bash
-   bun install
-   ```
-5. Run Whatsapp bot
-   ```bash
-   bun run index.js
-   ```
-6. Scan QR Code In Terminal
+4. Execute Linux Setup below
 
 # Linux Setup (Download newest yt-dlp for downloader and setup MySQL Database & table)
 ## Current Distro support: Ubuntu
