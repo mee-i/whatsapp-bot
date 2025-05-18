@@ -22,10 +22,16 @@ export async function getLatestEarthquake() {
 
     const latest = Array.isArray(gempa) ? gempa[0] : gempa;
 
+    const timeStr = latest.waktu.trim();
+    const originalDate = new Date(timeStr.replace("  ", "T") + "Z");
+    const offsetInMs = 7 * 60 * 60 * 1000;
+    const dateUtcPlus7 = new Date(originalDate.getTime() + offsetInMs);
+    const formatted = dateUtcPlus7.toISOString().replace("T", " ").replace("Z", "");
+
     return {
       eventid: latest.eventid,
       status: latest.status,
-      waktu: latest.waktu,
+      waktu: formatted,
       lintang: parseFloat(latest.lintang),
       bujur: parseFloat(latest.bujur),
       dalam: parseInt(latest.dalam),

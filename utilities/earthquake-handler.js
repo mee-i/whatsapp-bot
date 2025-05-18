@@ -64,7 +64,7 @@ module.exports = {
             const radius = (Math.exp(data?.mag / 1.01 - 0.13)).toFixed(2);
             const localmessage = `🌐 *[DEBUG] Realtime Earthquake*
 📍 *Jarak:* ${localdistance} km dari lokasi anda
-📅 *Waktu:* ${data?.waktu}
+📅 *Waktu (UTC+7):* ${data?.waktu}
 📌 *Area:* ${data?.area}
 📐 *Lintang:* ${data?.lintang}
 📐 *Bujur:* ${data?.bujur}
@@ -88,7 +88,7 @@ Data ini realtime dari BMKG. www.bmkg.go.id`;
 
             const message = `🌐 *Peringatan Gempa!*
 📍 *Jarak:* ${distance} km dari lokasi anda
-📅 *Waktu:* ${data?.waktu}
+📅 *Waktu (UTC+7):* ${data?.waktu}
 📌 *Area:* ${data?.area}
 📐 *Lintang:* ${data?.lintang}
 📐 *Bujur:* ${data?.bujur}
