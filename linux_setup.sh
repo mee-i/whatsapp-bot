@@ -93,17 +93,7 @@ if [ "$ID" = "ubuntu" ]; then
     if command -v "$JS_RUNTIME" >/dev/null 2>&1; then
         echo -e "[✅] ${GREEN}$JS_RUNTIME is installed${RESET}"
     else
-        echo -e "[❌] ${RED}$JS_RUNTIME is not installed.${RESET}"
-        if [ "$JS_RUNTIME" = "bun" ]; then
-            echo -e "[🔄️] ${MAGENTA}Installing bun...${RESET}"
-            if ! curl -fsSL https://bun.sh/install | bash; then
-                echo -e "[❌] ${RED}Failed to install bun. Please check your internet connection.${RESET}"
-                exit 1
-            fi
-        else
-            echo -e "[❌] ${RED}$JS_RUNTIME is not installed. Please install it manually.${RESET}"
-            exit 1
-        fi
+        echo -e "[❌] ${RED}$JS_RUNTIME is not installed. Please install it manually.${RESET}"
         exit 1
     fi
 
