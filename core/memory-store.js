@@ -80,6 +80,7 @@ function createCustomMemoryStore() {
 
   const fetchGroupMetadata = async (jid, sock) => {
     try {
+      if (groupMetadata.has(jid)) return groupMetadata.get(jid);
       const metadata = await sock.groupMetadata(jid);
       groupMetadata.set(jid, metadata);
       return metadata;

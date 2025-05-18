@@ -18,6 +18,8 @@ const NodeCache = require("node-cache");
 const { useMySQLAuthState } = require('mysql-baileys');
 const pino = require("pino");
 const logger = pino({});
+const { Config } = require("./config.js");
+
 store.readFromFile("./baileys_store.json");
 
 setInterval(() => {
@@ -112,6 +114,16 @@ async function WhatsappEvent() {
     const { connection, lastDisconnect, qr } = update || {};
     if (qr) {
       console.log(await QRCode.toString(qr, {type:'terminal'}))
+    }
+
+    if (connection === "open") {
+      earthquake.active = true;
+      console.log("Connection opened");
+      if (Config?.debug) {
+        await sock.sendMessage(`${Config?.Owner}@s.whatsapp.net`, {
+          text: `[DEBUG] Bot is online!`,
+        });
+      }
     }
 
     if (connection === "close") {

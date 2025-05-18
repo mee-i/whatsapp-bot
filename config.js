@@ -4,6 +4,7 @@ const Config = {
   Admin: ["6281220533069"],
   AIMessage: [],
   CurrentNumber: "6281220533069",
+  debug: true,
 
   ReadMessage: true,
   Sticker: {
@@ -18,6 +19,7 @@ const FunctionDetails = {};
 const MenuList = {};
 
 const EarthquakeAPI = "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json";
+const RealtimeEarthquakeAPI = "https://bmkg-content-inatews.storage.googleapis.com/live30event.xml";
 //const EarthquakeAPI = "http://ancloud.my.id/gempa.json";
 
 const Gemini = {
@@ -33,4 +35,5 @@ module.exports = {
   MenuList,
   Gemini,
   EarthquakeAPI,
+  RealtimeEarthquakeAPI,
 };

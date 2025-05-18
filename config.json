@@ -9,7 +9,10 @@
     "GROUP-ONLY": [
       "antilink",
       "everyone",
-      "members"
+      "members",
+      "hidetagall",
+      "tageveryone",
+      "notifgempa"
     ]
   },
   "AntiLink": []
