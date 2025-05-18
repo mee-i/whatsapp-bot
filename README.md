@@ -20,9 +20,10 @@ A simple and customizable WhatsApp bot built using the [`@WhiskeySockets/Baileys
 - [x] Earthquake Notification
 - [x] Implement SQL Auth
 - [x] Create a install script
+- [x] Create a new setup script
+- [x] Create auto download yt-dlp bin
+- [ ] Create a sticker author
 - [ ] Add more features up to 100++
-- [ ] Create a new setup script
-- [ ] Create auto download yt-dlp bin
 
 ## Installation
 
