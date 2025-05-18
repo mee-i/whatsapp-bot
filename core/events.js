@@ -42,7 +42,7 @@ async function MessageEventsHandler(rawdata, sock) {
             Object.keys(AutoFunction).forEach(async (key) => {
                 if (data.status == "PENDING" || data.key.fromMe)
                     return data;
-                await AutoFunction[key]({sock, msg: data, text, isGroup});
+                await AutoFunction[key]({sock, msg: data, text: text || "", isGroup});
             });
 
             if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
