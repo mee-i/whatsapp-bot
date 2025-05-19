@@ -19,6 +19,7 @@ const { useMySQLAuthState } = require('mysql-baileys');
 const pino = require("pino");
 const logger = pino({});
 const { Config } = require("./config.js");
+const { browser } = require("./browser.js");
 
 store.readFromFile("./baileys_store.json");
 
@@ -26,6 +27,7 @@ setInterval(() => {
   store.writeToFile("./baileys_store.json");
 }, 10_000);
 const groupCache = new NodeCache({ stdTTL: 5 * 60, useClones: false })
+
 
 async function WhatsappEvent() {
   await LoadMenu();
