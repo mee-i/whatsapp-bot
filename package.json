@@ -10,8 +10,10 @@
     "restart": "pm2 restart bot",
     "logs": "pm2 logs bot",
     "update": "git pull && bun install && pm2 restart bot",
+    "update:local": "git pull && bun install && bun run start",
     "build": "bun build index.js --outdir=dist",
-    "compile": "bun build index.js --compile --outfile=bot"
+    "compile": "bun build index.js --compile --outfile=bot",
+    "auth:reset": "sudo mysql -u root -e \"DELETE FROM bot.auth\""
   },
   "type": "commonjs",
   "author": "Mee-I",
