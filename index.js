@@ -1,3 +1,5 @@
+import { closeBrowser } from "./browser.js";
+
 const {
   DisconnectReason,
   makeCacheableSignalKeyStore, fetchLatestBaileysVersion, makeWASocket
@@ -19,7 +21,6 @@ const { useMySQLAuthState } = require('mysql-baileys');
 const pino = require("pino");
 const logger = pino({});
 const { Config } = require("./config.js");
-const { browser } = require("./browser.js");
 
 store.readFromFile("./baileys_store.json");
 
@@ -172,4 +173,11 @@ figlet("MeeI-Bot", (err, data) => {
 });
 
 console.log("Starting Bot...");
+process.on('SIGINT', async () => {
+  console.log('\n🛑 Ctrl+C detected! Cleaning up...');
+  // Do cleanup here
+  await closeBrowser();
+  process.exit(0); // Exit gracefully
+});
+
 await WhatsappEvent();

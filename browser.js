@@ -1,8 +1,22 @@
+// browser.js
 const { chromium } = require('playwright');
 
-console.log("[ℹ️] Launching chromium browser for brat image generation...");
-const browser = chromium.launch({headless: true});
+let browser = null;
 
-module.exports = {
-    browser
+async function getBrowser() {
+  if (!browser) {
+    browser = await chromium.launch({ headless: true });
+    console.log('✅ Chromium launched once');
+  }
+  return browser;
 }
+
+async function closeBrowser() {
+  if (browser) {
+    await browser.close();
+    browser = null;
+    console.log('🛑 Chromium closed');
+  }
+}
+
+module.exports = { getBrowser, closeBrowser };
