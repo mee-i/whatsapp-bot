@@ -5,14 +5,11 @@ module.exports = {
     info: async ({sock, msg}) => {
         const groups = await sock.groupFetchAllParticipating();
         const groupCount = Object.keys(groups).length;
-        const chatCount = await sock.chats.all();
-        const chatCountLength = chatCount.length;
         const users = await db.ReadUserData();
         const userCount = Object.keys(users).length;
 
         const message = `*Info MeeI Bot*
 *Total Group: ${groupCount}
-*Total Chat: ${chatCountLength}
 *Total Fitur: ${Object.keys(FunctionCommand).length}
 *Total User: ${userCount}
 `;
