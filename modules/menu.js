@@ -81,8 +81,9 @@ List Menu:
     await sock.sendMessage(
       msg?.key?.remoteJid,
       {
-        image: { url: "./media/MeeI-Bot.png" },
+        video: { url: "./media/MeeI-Watsapp-Bot.gif" },
         caption: menu,
+        gifPlayback: true
       },
       { quoted: msg }
     );
