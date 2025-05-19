@@ -1,5 +1,4 @@
 const { FunctionCommand, Config } = require('../config.js');
-const { store } = require('../core/memory-store.js');
 const db = require('../utilities/database');
 
 module.exports = {

@@ -1,7 +1,5 @@
 const { writeFile } = require('fs/promises');
-const fs = require('fs');
 const ffmpeg = require('fluent-ffmpeg');
-const { Config } = require('../config.js');
 const { getBrowser } = require('../browser.js');
 /**
  * Generate a brat image with custom text and dimensions
