@@ -13,7 +13,7 @@ const { Config } = require('../config.js');
 console.log("[ℹ️] Launching chromium browser for brat image generation...");
 const browser = await chromium.launch({ headless: true });
 
-async function BratGenerator(text, width = 500, height = 500) {
+async function get_map(text, width = 500, height = 500) {
     if (!text) throw new Error('Text is required for BratGenerator');
 
     const context = await browser.newContext({
@@ -72,40 +72,40 @@ function convertPngToWebp(inputPath, outputPath) {
     });
 }
 
-module.exports = {
-    brat: async ({ sock, msg }, text) => {
-        await sock.sendMessage(msg.key.remoteJid, {
-            text: `*Generating brat image*`,
-        }, { quoted: msg });
+ module.exports = {
+//     brat_abc: async ({ sock, msg }, text) => {
+//         await sock.sendMessage(msg.key.remoteJid, {
+//             text: `*Generating brat image*`,
+//         }, { quoted: msg });
 
-        try {
-            const id = await BratGenerator(text, 500, 500);
-            await convertPngToWebp(`./media/downloads/${id}.png`, `./media/downloads/${id}.webp`);
-            await sock.sendMessage(
-                msg.key.remoteJid,
-                {
-                    sticker: {
-                        url: `./media/downloads/${id}.webp`,
-                    },
-                    isAnimated: false,
-                },
-                {
-                    quoted: msg,
-                }
-            );
-        } catch (e) {
-            await sock.sendMessage(msg.key.remoteJid, {
-                text: "Caught an error! Please try again later.",
-            });
-            console.error(e);
-        }
-    },
-    Config: {
-        menu: "Sticker",
-        details: {
-            brat: {
-                description: "Generate a brat image with custom text",
-            },
-        },
-    }
+//         try {
+//             const id = await BratGenerator(text, 500, 500);
+//             await convertPngToWebp(`./media/downloads/${id}.png`, `./media/downloads/${id}.webp`);
+//             await sock.sendMessage(
+//                 msg.key.remoteJid,
+//                 {
+//                     sticker: {
+//                         url: `./media/downloads/${id}.webp`,
+//                     },
+//                     isAnimated: false,
+//                 },
+//                 {
+//                     quoted: msg,
+//                 }
+//             );
+//         } catch (e) {
+//             await sock.sendMessage(msg.key.remoteJid, {
+//                 text: "Caught an error! Please try again later.",
+//             });
+//             console.error(e);
+//         }
+//     },
+//     Config: {
+//         menu: "Sticker",
+//         details: {
+//             brat: {
+//                 description: "Generate a brat image with custom text",
+//             },
+//         },
+//     }
 };
