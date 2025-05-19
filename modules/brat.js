@@ -48,7 +48,6 @@ async function BratGenerator(text, width = 500, height = 500) {
 
     const id = "brat_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     await writeFile(`./media/downloads/${id}.png`, buffer);
-    await browser.close();
     console.log(`✅ Brat image saved as ./media/downloads/${id}.png (${width}x${height})`);
     return id;
 }
