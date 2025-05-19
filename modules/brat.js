@@ -13,7 +13,7 @@ async function BratGenerator(text, width = 500, height = 500) {
     if (!text) throw new Error('Text is required for BratGenerator');
 
     const browser = await getBrowser();
-    const context = browser.newContext({
+    const context = await browser.newContext({
         viewport: { width: 1920, height: 1080 },
         userAgent:
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
