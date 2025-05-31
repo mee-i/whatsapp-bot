@@ -116,9 +116,7 @@ async function Command(command, isGroup, sock, data) {
             }
             
             const remoteJid = isGroup ? data?.key?.participant : data?.key?.remoteJid;
-            console.log("prooo1")
             const userdata = await db.sql.select().from(db.userTable).where(db.eq(db.userTable.id, remoteJid)).then(res => res.length == 1);
-            console.log("prooo")
             if (!userdata) {
                 await sock.sendMessage(data?.key?.remoteJid, { text: "Anda belum terdaftar di database, tunggu sebentar kami akan mendaftarkan anda secara otomatis..." });
                 await db.sql.insert(db.userTable).values({
@@ -131,12 +129,18 @@ async function Command(command, isGroup, sock, data) {
                 await sock.sendMessage(data?.key?.remoteJid, { text: "Daftar selesai!" });
             }
 
-            await xp.add({remoteJid: remoteJid, sock, msg: data});
+            await xp.add({remoteJid, sock, msg: data});
             
             try {
                 const checkUserdata = await db.sql.select().from(db.userTable).where(db.eq(db.userTable.id, remoteJid)).then(res => res.length == 1);
                 if (!checkUserdata)
                     await sock.sendMessage(data?.key?.remoteJid, { text: "Anda belum terdaftar di database, kesalahan kode?? Tunggu sebentar" });
+                await db.sql.insert(db.commandLogTable).values({
+                    id: remoteJid,
+                    command: CommandWithoutPrefix,
+                    isGroup: isGroup,
+                    args: Args.join(" "),
+                });
                 await Func({sock, msg: data, isGroup}, ...Args);
             } catch (error) {
                 await sock.sendMessage(data?.key?.remoteJid, { text: "Caught an error, please report to owner /bug <message>"});
