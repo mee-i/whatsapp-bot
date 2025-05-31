@@ -10,10 +10,12 @@
     "restart": "pm2 restart bot",
     "logs": "pm2 logs bot",
     "update": "git pull && bun install && pm2 restart bot",
-    "update:local": "git pull && bun install && bun run start",
+    "update:dev": "git pull && bun install && bun run start",
     "build": "bun build index.js --outdir=dist",
     "compile": "bun build index.js --compile --outfile=bot",
-    "auth:reset": "sudo mysql -u root -e \"DELETE FROM bot.auth\""
+    "auth:reset": "sudo mysql -u root -e \"DELETE FROM bot.auth\"",
+    "db:update": "drizzle-kit generate && drizzle-kit migrate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "type": "commonjs",
   "author": "Mee-I",
@@ -22,25 +24,29 @@
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
     "axios": "^1.9.0",
-    "baileys": "^6.7.17",
+    "baileys": "^6.7.18",
     "chalk": "^5.4.1",
     "dotenv": "^16.5.0",
+    "drizzle-orm": "^0.44.1",
     "figlet": "^1.8.1",
     "fluent-ffmpeg": "^2.1.3",
     "jimp": "^1.6.0",
-    "link-preview-js": "^3.0.15",
+    "link-preview-js": "^3.1.0",
     "mysql-baileys": "^1.5.1",
+    "mysql2": "^3.14.1",
     "node-cache": "^5.1.2",
     "playwright": "^1.52.0",
     "qrcode": "^1.5.4",
     "sharp": "^0.33.5",
-    "systeminformation": "^5.25.11",
+    "systeminformation": "^5.27.1",
     "uuid": "^11.1.0",
     "xml2js": "^0.6.2",
-    "youtube-dl-exec": "^3.0.21"
+    "youtube-dl-exec": "^3.0.22"
   },
   "devDependencies": {
-    "@types/bun": "^1.2.13"
+    "@types/bun": "^1.2.15",
+    "drizzle-kit": "^0.31.1",
+    "tsx": "^4.19.4"
   },
   "peerDependencies": {
     "typescript": "^5.7.2"

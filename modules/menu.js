@@ -1,3 +1,4 @@
+
 const {
   FunctionCommand,
   FunctionDetails,
@@ -5,7 +6,9 @@ const {
   Config,
 } = require("../config.js");
 
-const db = require("../utilities/database.js");
+const db = require("../database");
+const config_file = require("../utilities/database.js");
+const xp = require("../utilities/xp.js");
 
 function getParameterNames(func) {
   const fnStr = func.toString().replace(/\s+/g, ' ');
@@ -18,9 +21,12 @@ function getParameterNames(func) {
 module.exports = {
   menu: async ({sock, msg}) => {
     const remoteJid = msg?.key?.participant ?? msg?.key?.remoteJid;
-    const datafile = await db.Config.ReadConfig();
-    const UserData = await db.UserData.Read(remoteJid);
+    const datafile = await config_file.Config.ReadConfig();
+    const UserData = await db.sql.select()
+      .from(db.userTable).where(
+        db.eq(db.userTable.id, remoteJid)).then(res => res[0]);
     const CommandOptions = datafile["CommandOptions"];
+    console.log(UserData);
 
     const now = new Date();
     const months = [
@@ -43,7 +49,8 @@ module.exports = {
       .getMinutes()
       .toString()
       .padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
-    const nextLevelXP = 100 * Math.pow(UserData.level + 1, 2) - UserData.xp;
+    
+    const nextLevelXP = xp.getNextLevelXP(UserData.level);
     let menu = `*${Config.BotName} Menu!*
 _Halo,_ *${msg?.pushName}*
 XP Kamu: ${UserData.xp}

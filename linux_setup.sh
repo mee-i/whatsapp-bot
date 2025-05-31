@@ -119,21 +119,11 @@ if [ "$ID" = "ubuntu" ]; then
         exit 1
     fi
 
-    # Create table auth
-    CREATE_TABLE_AUTH="CREATE TABLE IF NOT EXISTS auth (
-    session varchar(50) NOT NULL,
-    id varchar(100) NOT NULL,
-    value json DEFAULT NULL,
-    UNIQUE KEY idxunique (session, id),
-    KEY idxsession (session),
-    KEY idxid (id)
-) ENGINE=MyISAM;"
-
-    if ! sudo mysql -h localhost -u root -D "$MYSQL_DATABASE" -e "$CREATE_TABLE_AUTH"; then
-        echo -e "[❌] ${RED}Failed to create table auth. Please check your MySQL server.${RESET}"
+    if ! $JS_RUNTIME run db:update; then
+        echo -e "[❌] ${RED}Failed to migrate tables. Please check your MySQL server or drizzle-kit configuration.${RESET}"
         exit 1
     fi
-    echo -e "[✅] ${GREEN}Table auth created${RESET}"
+    echo -e "[✅] ${GREEN}Tables migrated${RESET}"
 
     echo -e "[✅] ${GREEN}MySQL setup completed successfully${RESET}"
 

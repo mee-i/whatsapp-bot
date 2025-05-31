@@ -45,6 +45,11 @@ async function MessageEventsHandler(rawdata, sock) {
                 await AutoFunction[key]({sock, msg: data, text: text || "", isGroup});
             });
 
+            if (typeof text !== 'string') {
+                Log(`${colors.FgRed}This message contains empty message, no handling will be done.`);
+                return data;
+            }
+
             if (hasPrefix(text, CommandOptions["COMMAND-PREFIXES"])) {
                 Log(`${colors.FgYellow}${text}`);
                 if (data.status == "PENDING" || data.key.fromMe)

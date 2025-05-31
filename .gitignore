@@ -4,11 +4,14 @@ auth_info_baileys/
 start.sh
 baileys_store.json
 .env
-database/*
 media/downloads/*
 test.js
 bot.log
 
+database/ai-database.json
+database/earthquake.json
+database/userdata.json
+drizzle/
 # Logs
 
 logs

@@ -1,9 +1,9 @@
 const { store } = require('./memory-store.js');
 const { FunctionCommand, FunctionDetails } = require('../config.js');
-const fs = require('node:fs');
 const { Config } = require('../config.js');
 const { LoadMenu } = require('../load-menu.js');
-const db = require('../utilities/database.js');
+const config_file = require('../utilities/database.js');
+const db = require('../database');
 const xp =  require('../utilities/xp.js');
 
 function hasPrefix(command, prefixes) {
@@ -32,7 +32,7 @@ async function Command(command, isGroup, sock, data) {
     if (data?.fromMe)
         return;
     
-    const config = await db.Config.ReadConfig();
+    const config = await config_file.Config.ReadConfig();
     const CommandOptions = config["CommandOptions"];
 
     if (!hasPrefix(command, CommandOptions["COMMAND-PREFIXES"]))
@@ -116,17 +116,25 @@ async function Command(command, isGroup, sock, data) {
             }
             
             const remoteJid = isGroup ? data?.key?.participant : data?.key?.remoteJid;
-            const userdata = await db.UserData.Read(remoteJid);
+            console.log("prooo1")
+            const userdata = await db.sql.select().from(db.userTable).where(db.eq(db.userTable.id, remoteJid)).then(res => res.length == 1);
+            console.log("prooo")
             if (!userdata) {
                 await sock.sendMessage(data?.key?.remoteJid, { text: "Anda belum terdaftar di database, tunggu sebentar kami akan mendaftarkan anda secara otomatis..." });
-                await db.UserData.Add({ remoteJid: remoteJid, name: data.pushName });
+                await db.sql.insert(db.userTable).values({
+                    id: remoteJid,
+                    name: data.pushName,
+                    xp: 0,
+                    level: 0,
+                    premium: false
+                });
                 await sock.sendMessage(data?.key?.remoteJid, { text: "Daftar selesai!" });
             }
 
             await xp.add({remoteJid: remoteJid, sock, msg: data});
             
             try {
-                const checkUserdata = await db.UserData.Read(remoteJid)
+                const checkUserdata = await db.sql.select().from(db.userTable).where(db.eq(db.userTable.id, remoteJid)).then(res => res.length == 1);
                 if (!checkUserdata)
                     await sock.sendMessage(data?.key?.remoteJid, { text: "Anda belum terdaftar di database, kesalahan kode?? Tunggu sebentar" });
                 await Func({sock, msg: data, isGroup}, ...Args);

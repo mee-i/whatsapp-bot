@@ -1,9 +1,6 @@
 const { Config } = require("../config");
-const fs = require("fs");
-const path = require("path");
 const { fetchGroupMetadata } = require("../core/memory-store");
-
-const DB_PATH = path.resolve(__dirname, "../database/earthquake.json");
+const db = require("../database");
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
     const toRad = deg => deg * Math.PI / 180;
@@ -18,34 +15,12 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-function ensureDatabase() {
-    if (!fs.existsSync(DB_PATH)) {
-        fs.writeFileSync(DB_PATH, JSON.stringify({
-            MessageNotification: [],
-            Earthquake: []
-        }, null, 2), "utf8");
-    }
-    
-    const raw = fs.readFileSync(DB_PATH, "utf8");
-    try {
-        return JSON.parse(raw);
-    } catch {
-        fs.writeFileSync(DB_PATH, JSON.stringify({
-            MessageNotification: [],
-            Earthquake: []
-        }, null, 2), "utf8");
-        return { MessageNotification: [], Earthquake: [] };
-    }
-}
-
-let firstData = true;
 module.exports = {
     active: false,
     handler: async (data, sock) => {
         if (!module.exports.active)
             return;
-        const db = ensureDatabase();
-        const notifications = db.MessageNotification;
+        const notifications = await db.sql.select().from(db.messageNotificationTable);
         
         const lat = data?.lintang;
         const lon = data?.bujur;
@@ -54,7 +29,7 @@ module.exports = {
             return;
         }
         
-        const isDuplicate = db.Earthquake.find(q => q.eventid === data?.eventid);
+        const isDuplicate = await db.sql.select().from(db.earthquakeTable).where(db.eq(db.earthquakeTable.event_id, data?.eventid)).then(res => res.length == 1);
         if (isDuplicate) return;
         
         const radius = (Math.exp(data?.mag / 1.01 - 0.13));
@@ -107,8 +82,9 @@ Data ini realtime dari BMKG. www.bmkg.go.id`;
             await sock.sendMessage(location.id, { text: message, mentions });
         }
 
-        db.Earthquake.push({
-            eventid: data?.eventid,
+
+        await db.sql.insert(db.earthquakeTable).values({
+            event_id: data?.eventid,
             status: data?.status,
             waktu: data?.waktu,
             lintang: data?.lintang,
@@ -118,7 +94,5 @@ Data ini realtime dari BMKG. www.bmkg.go.id`;
             fokal: data?.fokal,
             area: data?.area
         });
-
-        fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 4), "utf8");
     }
 };

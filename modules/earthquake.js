@@ -1,12 +1,10 @@
-const fs = require("node:fs");
+const db = require("../database");
 
 async function notifgempa({ sock, msg }, latitude, longitude) {
-    const Database = fs.readFileSync("./database/earthquake.json");
-    const EarthquakeDB = JSON.parse(Database);
-    if (!EarthquakeDB["MessageNotification"])
-        EarthquakeDB["MessageNotification"] = [];
 
-    const Exists = EarthquakeDB["MessageNotification"].find(mn => mn.id === msg?.key?.remoteJid);
+    const Exists = await db.sql.select().from(db.messageNotificationTable).where(
+        db.eq(db.messageNotificationTable.id, msg?.key?.remoteJid)
+    ).then(res => res.length == 1);
 
     const lat = parseFloat(latitude);
     const lon = parseFloat(longitude);
@@ -19,12 +17,11 @@ async function notifgempa({ sock, msg }, latitude, longitude) {
     }
 
     if (!Exists) {
-        EarthquakeDB["MessageNotification"].push({ id: msg?.key?.remoteJid, lat, lon });
-        fs.writeFileSync(
-            "./database/earthquake.json",
-            JSON.stringify(EarthquakeDB, null, 4),
-            "utf8"
-        );
+        await db.sql.insert(db.messageNotificationTable).values({
+            id: msg?.key?.remoteJid,
+            lat: lat,
+            lon: lon
+        });
         await sock.sendMessage(msg?.key?.remoteJid, { text: `Notifikasi gempa *diaktifkan* di chat ini.\n*Lokasi Penerima*\nLintang: ${lat}\nBujur: ${lon}` });
     }
     else {
@@ -33,24 +30,18 @@ async function notifgempa({ sock, msg }, latitude, longitude) {
 }
 
 async function matikannotifgempa({ sock, msg }) {
-    const Database = fs.readFileSync("./database/earthquake.json");
-    const EarthquakeDB = JSON.parse(Database);
-    if (!EarthquakeDB["MessageNotification"])
-        EarthquakeDB["MessageNotification"] = [];
-
-    const Exists = EarthquakeDB["MessageNotification"].find(mn => mn.id === msg?.key?.remoteJid);
+    const Exists = await db.sql.select().from(db.messageNotificationTable).where(
+        db.messageNotificationTable.id.equals(msg?.key?.remoteJid)
+    ).then(res => res.length == 1);
 
     if (Exists) {
-        EarthquakeDB["MessageNotification"] = EarthquakeDB["MessageNotification"].filter(mn => mn.id !== msg?.key?.remoteJid);
-        fs.writeFileSync(
-            "./database/earthquake.json",
-            JSON.stringify(EarthquakeDB, null, 4),
-            "utf8"
+        await db.sql.delete(db.messageNotificationTable).where(
+            db.messageNotificationTable.id.equals(msg?.key?.remoteJid)
         );
         await sock.sendMessage(msg?.key?.remoteJid, { text: "Notifikasi gempa *dinonaktifkan* di chat ini." });
     }
     else {
-        await sock.sendMessage(msg?.key?.remoteJid, { text: "Notifikasi sudah *dinonaktifkan* di chat ini tidak perlu dinonaktifkan ulang.\nUntuk mengaktifkan ketik /notifgempa" })
+        await sock.sendMessage(msg?.key?.remoteJid, { text: "Tidak ada notifikasi gempa yang aktif di chat ini.\nUntuk mengaktifkan ketik /notifgempa" })
     }
 }
 

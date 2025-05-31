@@ -1,36 +1,47 @@
-const db = require('./database.js');
+
+const db = require('../database');
 
 const baseXP = 100;
 
-async function add({remoteJid, sock, msg}) {
-    const userdata = await db.UserData.Read(remoteJid);
-    userdata.xp += 25;
+function getXPForLevel(level) {
+  return baseXP * Math.pow(level, 2);
+}
 
-    let threshold = baseXP * Math.pow(userdata.level, 2);
+function getNextLevelXP(level) {
+  return getXPForLevel(level + 1);
+}
+
+async function add({ remoteJid, sock, msg }) {
+  const [userdata] = await db.sql.select().from(db.userTable)
+    .where(db.eq(db.userTable.id, remoteJid));
+
+  userdata.xp += 25;
+
+  let threshold = getNextLevelXP(userdata.level);
+
+  if (userdata.xp >= threshold) {
     const initialLevel = userdata.level;
-
-    while (userdata.xp >= threshold) {
-        userdata.level++;
-        threshold = baseXP * Math.pow(userdata.level, 2);
-    }
-
-    const nextLevelXP = baseXP * Math.pow(userdata.level + 1, 2) - userdata.xp;
-
-    if (userdata.level > initialLevel) {
-      await sock.sendMessage(msg.key.remoteJid, { text: `*LEVEL UP*
+    userdata.level++;
+    await sock.sendMessage(msg.key.remoteJid, {
+      text: `*LEVEL UP*
 Hey @${userdata.name}, Level anda bertambah!
 *${initialLevel}* > *${userdata.level}*
 
 XP Anda saat ini: ${userdata.xp}
-XP untuk level berikutnya: ${nextLevelXP}`, mentions: [`${remoteJid}`] });
-    }
+XP untuk level berikutnya: ${getNextLevelXP(userdata.level)}`,
+      mentions: [`${remoteJid}`]
+    });
+  }
 
-    await db.UserData.Modify(remoteJid, 'xp', userdata.xp);
-    await db.UserData.Modify(remoteJid, 'level', userdata.level);
-
-    
+  await db.sql.update(db.userTable)
+    .set({
+      xp: userdata.xp,
+      level: userdata.level
+    })
+    .where(db.eq(db.userTable.id, remoteJid));
 }
 
+
 module.exports = {
-  add, baseXP
+  add, baseXP, getXPForLevel, getNextLevelXP,
 };
