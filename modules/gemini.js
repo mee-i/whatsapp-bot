@@ -49,74 +49,8 @@ const safetySettings = [
 	}
 ];
 
-async function gemini({sock, msg}, message) {
-	const sendmsg = await sock.sendMessage(msg?.key?.remoteJid, { text: "Tunggu bentar ya!" });
-	let loadingFrame = 0;
-	const worker = new Worker("./utilities/loading-worker.js");
-	worker.on("message", async (r) => {
-		if (loadingFrame >= 100)
-			worker
-				.terminate()
-				.then(() => {
-					setTimeout(async () => {
-						await sock.sendMessage(msg?.key?.remoteJid, {
-							text: "Failed to generate AI message! (?) (100s Frame Exceed) send report to owner! /bug <message>",
-							edit: sendmsg.key,
-						});
-					}, 500);
-				})
-				.catch((error) => {
-					console.error("Error stopping worker:", error);
-				});
-		await sock.sendMessage(msg?.key?.remoteJid, { text: r, edit: sendmsg.key });
-		loadingFrame += 1;
-	});
-
-	worker.on("error", (e) => {
-		console.error("Worker error:", e);
-	});
-
-	await sleep(5000);
-
-	const Database = fs.readFileSync("./database/ai-database.json");
-
-	const AIDatabase = JSON.parse(Database);
-
-	if (!AIDatabase["gemini"]) {
-		AIDatabase["gemini"] = {
-			model,
-			userChat: {},
-		};
-	}
-	if (!AIDatabase["gemini"]["userChat"][msg?.key?.remoteJid])
-		AIDatabase["gemini"]["userChat"][msg?.key?.remoteJid] = [];
-
-	const chatSession = model.startChat({
-		generationConfig,
-		safetySettings,
-		history: AIDatabase["gemini"]["userChat"][msg?.key?.remoteJid],
-	});
-	worker.terminate().catch((error) => {
-		console.error("Error stopping worker:", error);
-	});
-
-	const result = await chatSession.sendMessage(message);
-
-	fs.writeFileSync(
-		"./database/ai-database.json",
-		JSON.stringify(AIDatabase, null, 4),
-		"utf8"
-	);
-
-	await sock.sendMessage(msg?.key?.remoteJid, {
-		text: result.response.text(),
-		edit: sendmsg.key,
-	});
-}
-
-
-async function gemini_stream({sock, msg}, message) {
-	const sendmsg = await sock.sendMessage(msg?.key?.remoteJid, { text: "..." }, { quoted: msg });
+async function gemini({ sock, msg }, message) {
+	await sock.sendPresenceUpdate('composing', msg?.key?.remoteJid);
 	const Database = fs.readFileSync("./database/ai-database.json");
 
 	const AIDatabase = JSON.parse(Database);
@@ -135,37 +69,27 @@ async function gemini_stream({sock, msg}, message) {
 		// safetySettings,
 		history: AIDatabase["gemini"]["userChat"][msg?.key?.remoteJid],
 	});
-	const result = await chatSession.sendMessageStream(message);
+	const result = await chatSession.sendMessage(message);
 
-	let resultText = "";
-	for await (const chunk of result.stream) {
-		resultText += chunk.text();
-		await sock.sendMessage(msg?.key?.remoteJid, {
-			text: resultText,
-			edit: sendmsg.key,
-		});
-	}
+	await sock.sendMessage(
+		msg?.key?.remoteJid,
+		{
+			text: result.response.text(),
+		},
+		{ quoted: msg }
+	);
 
 	fs.writeFileSync(
 		"./database/ai-database.json",
 		JSON.stringify(AIDatabase, null, 4),
 		"utf8"
 	);
-	await sock.sendMessage(
-		msg?.key?.remoteJid,
-		{
-			react: {
-				text: '✅',
-				key: sendmsg.key
-			}
-		}
-	)
 }
 
 
 
 
-async function newchat({sock, msg}) {
+async function newchat({ sock, msg }) {
 	await sock.sendMessage(msg?.key?.remoteJid, { text: "Generating new chat..." });
 	const Database = fs.readFileSync("./database/ai-database.json");
 
@@ -196,8 +120,8 @@ module.exports = {
 			fs.writeFileSync(DbFile, JSON.stringify({}), "utf-8");
 	},
 	newchat,
-	gemini: async ({sock, msg}, message) => gemini_stream({sock, msg}, message),
-	ai: async ({sock, msg}, message) => module.exports.gemini({sock, msg}, message),
+	gemini: async ({ sock, msg }, message) => gemini({ sock, msg }, message),
+	ai: async ({ sock, msg }, message) => module.exports.gemini({ sock, msg }, message),
 	Config: {
 		menu: "AI",
 		details: {

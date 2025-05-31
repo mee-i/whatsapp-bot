@@ -37,7 +37,7 @@ export const earthquakeTable = mysqlTable('earthquake', {
 });
 
 export const commandLogTable = mysqlTable('command_log', {
-    id: varchar('id', { length: 100 }).notNull().primaryKey(),
+    id: varchar('id', { length: 100 }).notNull(),
     command: varchar('command', { length: 100 }).notNull(),
     args: text('args').notNull(),
     timestamp: timestamp('timestamp', { mode: 'string' }).notNull().defaultNow(),
