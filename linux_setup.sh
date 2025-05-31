@@ -208,10 +208,10 @@ EOF
 
     echo -e "[🔄️] ${MAGENTA}Creating database directory...${RESET}"
     if ! mkdir database; then
-        echo -e "[❌] ${RED}Failed to create database directory. Please check your permissions.${RESET}"
-        exit 1
+        echo -e "[ℹ️] ${RED}Database already created${RESET}"
+    else
+        echo -e "[✅] ${GREEN}Database directory created${RESET}"
     fi
-    echo -e "[✅] ${GREEN}Database directory created${RESET}"
     sleep 2
     echo -e "[✅] ${GREEN}Setup completed successfully${RESET}"
     echo -e "[ℹ️] ${CYAN}You can now run the bot using the command: $JS_RUNTIME run start${RESET}"
