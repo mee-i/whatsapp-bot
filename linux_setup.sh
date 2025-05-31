@@ -61,7 +61,7 @@ if [ "$ID" = "ubuntu" ]; then
     echo -n "[mysql] Create user for MySQL: "
     read -r MYSQL_USER
 
-    echo -n "[mysql] Password for $MYSQL_USER: "
+    echo -n "[mysql] Password for $MYSQL_USER (Should contains capital, special character, and number): "
     read -rs MYSQL_PASSWORD
     echo
 

@@ -88,8 +88,9 @@ List Menu:
     await sock.sendMessage(
       msg?.key?.remoteJid,
       {
-        image: { url: "./media/MeeI-Bot.png" },
+        image: { url: "./media/MeeI-Bot.png" }, // Change this to the path of your image or change image to video to use gif
         caption: menu,
+        // gifPlayback: true // Uncomment this line if you want to play the gif
       },
       { quoted: msg }
     );

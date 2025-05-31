@@ -47,6 +47,8 @@ async function WhatsappEvent() {
     tableName: "auth"
   });
   const sock = makeWASocket({
+    shouldSyncHistoryMessages: false,
+    syncFullHistory: false,
     auth: {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, logger),

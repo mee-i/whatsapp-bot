@@ -1,7 +1,5 @@
 const { writeFile } = require('fs/promises');
-const fs = require('fs');
 const ffmpeg = require('fluent-ffmpeg');
-const { Config } = require('../config.js');
 const { getBrowser } = require('../browser.js');
 /**
  * Generate a brat image with custom text and dimensions
@@ -15,7 +13,7 @@ async function BratGenerator(text, width = 500, height = 500) {
     if (!text) throw new Error('Text is required for BratGenerator');
 
     const browser = await getBrowser();
-    const context = context.newContext({
+    const context = await browser.newContext({
         viewport: { width: 1920, height: 1080 },
         userAgent:
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -50,7 +48,6 @@ async function BratGenerator(text, width = 500, height = 500) {
 
     const id = "brat_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     await writeFile(`./media/downloads/${id}.png`, buffer);
-    await browser.close();
     console.log(`✅ Brat image saved as ./media/downloads/${id}.png (${width}x${height})`);
     return id;
 }
