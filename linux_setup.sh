@@ -197,7 +197,7 @@ EOF
         echo -e "[❌] ${RED}Failed to migrate tables. Please check your MySQL server or drizzle-kit configuration.${RESET}"
         exit 1
     fi
-    echo -e "[✅] ${GREEN}Tables migrated${RESET}"
+    echo -e "\n[✅] ${GREEN}Tables migrated${RESET}"
 
     if ! $JS_RUNTIME_X playwright install --with-deps; then
         echo -e "[❌] ${RED}Failed to install playwright dependencies. Please check the error message above.${RESET}"
