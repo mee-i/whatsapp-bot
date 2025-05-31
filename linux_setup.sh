@@ -119,13 +119,7 @@ if [ "$ID" = "ubuntu" ]; then
         exit 1
     fi
 
-    if ! $JS_RUNTIME run db:update; then
-        echo -e "[❌] ${RED}Failed to migrate tables. Please check your MySQL server or drizzle-kit configuration.${RESET}"
-        exit 1
-    fi
-    echo -e "[✅] ${GREEN}Tables migrated${RESET}"
-
-    echo -e "[✅] ${GREEN}MySQL setup completed successfully${RESET}"
+    echo -e "[✅] ${GREEN}MySQL user setup completed successfully, tables will created after dependecies installed${RESET}"
 
     echo -e "[🔄️] ${MAGENTA}Installing yt-dlp...${RESET}"
     if ! wget -q --show-progress https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp; then
@@ -198,6 +192,12 @@ EOF
         echo -e "[❌] ${RED}Failed to install dependencies. Please check your package manager.${RESET}"
         exit 1
     fi
+
+    if ! $JS_RUNTIME run db:update; then
+        echo -e "[❌] ${RED}Failed to migrate tables. Please check your MySQL server or drizzle-kit configuration.${RESET}"
+        exit 1
+    fi
+    echo -e "[✅] ${GREEN}Tables migrated${RESET}"
 
     if ! $JS_RUNTIME_X playwright install --with-deps; then
         echo -e "[❌] ${RED}Failed to install playwright dependencies. Please check the error message above.${RESET}"
