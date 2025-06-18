@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "bun run index.js",
+    "start": "bun --hot run index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy": "pm2 start \"bun run start\" --name bot",
+    "deploy": "pm2 start \"bun --hot run start\" --name bot",
     "stop": "pm2 stop bot",
     "restart": "pm2 restart bot",
     "logs": "pm2 logs bot",
