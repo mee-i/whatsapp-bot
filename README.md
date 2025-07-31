@@ -39,6 +39,42 @@ you can disable with
 - [x] Create a new setup script
 - [x] Create auto download yt-dlp bin
 - [ ] Create a sticker author
+- [ ] RPG
+  - [x] Daily
+  - [ ] Store
+    - [ ] Sell
+    - [ ] Buy
+  - [ ] Fishing
+  - [ ] Farm
+  - [ ] Balance
+  - [ ] Bank
+  - [ ] Inventory
+    - [ ] Give item
+    - [ ] Show item
+  - [ ] Quest
+  - [ ] Bank
+    - [ ] Withdraw
+    - [ ] Deposit
+  - [ ] Leaderboard
+  - [ ] Add balance
+  - [ ] Work
+- [ ] Admin commands
+  - [ ] Kick
+  - [ ] Warn
+  - [ ] Lockdown
+- [ ] Random commands
+  - [ ] Cat
+  - [ ] Dog
+  - [ ] Car
+  - [ ] Bunny
+  - [ ] Lol
+  - [ ] Idk
+  - [ ] Meme
+  - [ ] Facts
+  - [ ] Kiss
+  - [ ] Hug
+  - [ ] AI random
+- [ ] Translate
 - [ ] CI/CD
 - [ ] Bot API
 - [ ] Add more features up to 100++
