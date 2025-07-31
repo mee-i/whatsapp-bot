@@ -1,5 +1,5 @@
 module.exports = {
-  checkip: async ({sock, msg}, ip) => {
+  checkip: async ({ sock, msg }, ip) => {
     await sock.sendMessage(msg.key.remoteJid, { text: `Checking for ${ip}` });
     const response = await fetch(
       `http://ip-api.com/json/${ip}?fields=status,message,continent,continentCode,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,offset,currency,isp,org,as,asname,mobile,proxy,hosting,query`
@@ -54,8 +54,8 @@ module.exports = {
     menu: "Tools",
     details: {
       checkip: {
-				description: "Check IP information"
-			},
+        description: "Check IP information",
+      },
     },
   },
 };

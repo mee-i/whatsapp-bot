@@ -1,4 +1,3 @@
-
 const { create: createYoutubeDl } = require("youtube-dl-exec");
 const downloader = createYoutubeDl(process.env.YTDL_PATH || "yt-dlp");
 const fs = require("fs");
@@ -31,10 +30,14 @@ module.exports = {
     const DirPath = "./media/downloads/";
     if (!fs.existsSync(DirPath)) fs.mkdirSync(DirPath, { recursive: true });
   },
-  downloadmp3: async ({sock, msg}, link) => {
-    await sock.sendMessage(msg.key.remoteJid, {
-      text: `*Downloading mp3*, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
-    }, {quoted: msg});
+  downloadmp3: async ({ sock, msg }, link) => {
+    await sock.sendMessage(
+      msg.key.remoteJid,
+      {
+        text: `*Downloading mp3*, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
+      },
+      { quoted: msg }
+    );
 
     try {
       const uuid = uuidv7();
@@ -85,10 +88,14 @@ Duration: ${formatSecond(download.duration)}`,
       console.error(e);
     }
   },
-  playaudio: async ({sock, msg}, link) => {
-    await sock.sendMessage(msg.key.remoteJid, {
-      text: `*Downloading mp3*, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
-    }, {quoted: msg});
+  playaudio: async ({ sock, msg }, link) => {
+    await sock.sendMessage(
+      msg.key.remoteJid,
+      {
+        text: `*Downloading mp3*, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
+      },
+      { quoted: msg }
+    );
 
     try {
       const uuid = uuidv7();
@@ -136,17 +143,21 @@ Duration: ${formatSecond(download.duration)}`,
       console.error(e);
     }
   },
-  downloadmp4: async ({sock, msg}, link) => {
-    await sock.sendMessage(msg.key.remoteJid, {
-      text: `*Downloading mp4*, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
-    }, {quoted: msg});
+  downloadmp4: async ({ sock, msg }, link) => {
+    await sock.sendMessage(
+      msg.key.remoteJid,
+      {
+        text: `*Downloading mp4*, ini akan mengambil waktu sedikit lama untuk video dengan durasi panjang`,
+      },
+      { quoted: msg }
+    );
 
     try {
       const uuid = uuidv7();
       const exec = await downloader.exec(link, {
         dumpSingleJson: true,
         simulate: false,
-				// format: "bestvideo[height<=720]+bestaudio/best",
+        // format: "bestvideo[height<=720]+bestaudio/best",
         format: "bestvideo+bestaudio/best",
         mergeOutputFormat: "mp4",
         output: `./media/downloads/${uuid}.%(ext)s`,
@@ -193,14 +204,22 @@ Resolution: ${download.resolution || ""} ${download.fps + " fps " || " "}${
       console.error(e);
     }
   },
-	ytmp4: async ({sock, msg}, link) => module.exports.downloadmp4({sock, msg}, link),
-	ytmp3: async ({sock, msg}, link) => module.exports.downloadmp3({sock, msg}, link),
-	instagram: async ({sock, msg}, link) => module.exports.downloadmp4({sock, msg}, link),
-	ig: async ({sock, msg}, link) => module.exports.downloadmp4({sock, msg}, link),
-	igaudio: async ({sock, msg}, link) => module.exports.playaudio({sock, msg}, link),
-	tiktok: async ({sock, msg}, link) => module.exports.downloadmp4({sock, msg}, link),
-	tt: async ({sock, msg}, link) => module.exports.downloadmp4({sock, msg}, link),
-	ttaudio: async ({sock, msg}, link) => module.exports.playaudio({sock, msg}, link),
+  ytmp4: async ({ sock, msg }, link) =>
+    module.exports.downloadmp4({ sock, msg }, link),
+  ytmp3: async ({ sock, msg }, link) =>
+    module.exports.downloadmp3({ sock, msg }, link),
+  instagram: async ({ sock, msg }, link) =>
+    module.exports.downloadmp4({ sock, msg }, link),
+  ig: async ({ sock, msg }, link) =>
+    module.exports.downloadmp4({ sock, msg }, link),
+  igaudio: async ({ sock, msg }, link) =>
+    module.exports.playaudio({ sock, msg }, link),
+  tiktok: async ({ sock, msg }, link) =>
+    module.exports.downloadmp4({ sock, msg }, link),
+  tt: async ({ sock, msg }, link) =>
+    module.exports.downloadmp4({ sock, msg }, link),
+  ttaudio: async ({ sock, msg }, link) =>
+    module.exports.playaudio({ sock, msg }, link),
   Config: {
     menu: "Downloader",
     details: {
@@ -216,27 +235,27 @@ Resolution: ${download.resolution || ""} ${download.fps + " fps " || " "}${
         description:
           "Download mp4 dari web manapun (dokumen) (Resolusi tertinggi)",
       },
-			// instagram: {
+      // instagram: {
       //   description:
       //     "Download mp4 dari Instagram (dokumen) (Resolusi tertinggi)",
       // },
-			// ig: {
+      // ig: {
       //   description:
       //     "Download mp4 dari Instagram (dokumen) (Resolusi tertinggi)",
       // },
-			// igaudio: {
+      // igaudio: {
       //   description:
       //     "Download mp3 dari Instagram (audio) (Resolusi tertinggi)",
       // },
-			// tiktok: {
+      // tiktok: {
       //   description:
       //     "Download mp4 dari Tiktok (dokumen) (Resolusi tertinggi)",
       // },
-			// tt: {
+      // tt: {
       //   description:
       //     "Download mp4 dari Tiktok (dokumen) (Resolusi tertinggi)",
       // },
-			// ttaudio: {
+      // ttaudio: {
       //   description:
       //     "Download mp3 dari Tiktok (audio) (Resolusi tertinggi)",
       // },
