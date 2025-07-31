@@ -23,30 +23,30 @@
   "description": "",
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
-    "axios": "^1.9.0",
+    "axios": "^1.11.0",
     "baileys": "^6.7.18",
     "chalk": "^5.4.1",
-    "dotenv": "^16.5.0",
-    "drizzle-orm": "^0.44.1",
-    "figlet": "^1.8.1",
+    "dotenv": "^16.6.1",
+    "drizzle-orm": "^0.44.4",
+    "figlet": "^1.8.2",
     "fluent-ffmpeg": "^2.1.3",
     "jimp": "^1.6.0",
     "link-preview-js": "^3.1.0",
-    "mysql-baileys": "^1.5.1",
-    "mysql2": "^3.14.1",
+    "mysql-baileys": "^1.5.3",
+    "mysql2": "^3.14.3",
     "node-cache": "^5.1.2",
-    "playwright": "^1.52.0",
+    "playwright": "^1.54.1",
     "qrcode": "^1.5.4",
     "sharp": "^0.33.5",
-    "systeminformation": "^5.27.1",
+    "systeminformation": "^5.27.7",
     "uuid": "^11.1.0",
     "xml2js": "^0.6.2",
     "youtube-dl-exec": "^3.0.22"
   },
   "devDependencies": {
-    "@types/bun": "^1.2.15",
-    "drizzle-kit": "^0.31.1",
-    "tsx": "^4.19.4"
+    "@types/bun": "^1.2.19",
+    "drizzle-kit": "^0.31.4",
+    "tsx": "^4.20.3"
   },
   "peerDependencies": {
     "typescript": "^5.7.2"
