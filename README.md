@@ -39,6 +39,8 @@ you can disable with
 - [x] Create a new setup script
 - [x] Create auto download yt-dlp bin
 - [ ] Create a sticker author
+- [ ] CI/CD
+- [ ] Bot API
 - [ ] Add more features up to 100++
 
 ## Installation
