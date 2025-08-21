@@ -1,4 +1,3 @@
-
 const {
   FunctionCommand,
   FunctionDetails,
@@ -10,92 +9,94 @@ const db = require("../database");
 const config_file = require("../utilities/database.js");
 const xp = require("../utilities/xp.js");
 
-function getParameterNames(func) {
+const MONTHS = [
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+];
+
+const extractParameters = (func) => {
   const fnStr = func.toString().replace(/\s+/g, ' ');
-  const result = fnStr.match(/^[^\(]*\(\s*([^\)]*)\)/);
-  return result && result[1]
-    ? result[1].split(',').map(param => param.trim())
+  const match = fnStr.match(/^[^\(]*\(\s*([^\)]*)\)/);
+  return match?.[1] 
+    ? match[1].split(',').map(param => param.trim()).slice(2)
     : [];
-}
+};
 
-module.exports = {
-  menu: async ({sock, msg}) => {
-    const remoteJid = msg?.key?.participant ?? msg?.key?.remoteJid;
-    const datafile = await config_file.Config.ReadConfig();
-    const UserData = await db.sql.select()
-      .from(db.userTable).where(
-        db.eq(db.userTable.id, remoteJid)).then(res => res[0]);
-    const CommandOptions = datafile["CommandOptions"];
-    console.log(UserData);
+const formatDateTime = () => {
+  const now = new Date();
+  return `${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()} ${
+    String(now.getHours()).padStart(2, "0")}:${
+    String(now.getMinutes()).padStart(2, "0")}:${
+    String(now.getSeconds()).padStart(2, "0")}`;
+};
 
-    const now = new Date();
-    const months = [
-      "Januari",
-      "Februari",
-      "Maret",
-      "April",
-      "Mei",
-      "Juni",
-      "Juli",
-      "Agustus",
-      "September",
-      "Oktober",
-      "November",
-      "Desember",
-    ];
-    const formattedDate = `${now.getDate()} ${
-      months[now.getMonth()]
-    } ${now.getFullYear()} ${now.getHours().toString().padStart(2, "0")}:${now
-      .getMinutes()
-      .toString()
-      .padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
-    
-    const nextLevelXP = xp.getNextLevelXP(UserData.level);
-    let menu = `*${Config.BotName} Menu!*
-_Halo,_ *${msg?.pushName}*
-XP Kamu: ${UserData.xp}
-Level Kamu: ${UserData.level}
+const buildCommandString = (cmd, prefix) => {
+  const params = extractParameters(FunctionCommand[cmd]);
+  const paramString = params.map(p => ` <${p}>`).join('');
+  const details = FunctionDetails[cmd];
+  
+  let description = '';
+  if (details?.description) {
+    const ownerTag = details.owneronly ? " (Owner only)" : "";
+    const adminTag = details.admingroup ? " (GC admin)" : "";
+    description = ` - _${details.description}_${ownerTag}${adminTag}`;
+  }
+  
+  return ` *${prefix}${cmd}*${paramString}${description}`;
+};
+
+const generateMenu = (userData, commandOptions, pushName) => {
+  const nextLevelXP = xp.getNextLevelXP(userData.level);
+  const prefix = commandOptions["COMMAND-PREFIXES"][0];
+  
+  let menu = `*${Config.BotName} Menu!*
+_Halo,_ *${pushName}*
+XP Kamu: ${userData.xp}
+Level Kamu: ${userData.level}
 XP untuk level berikutnya: ${nextLevelXP}
-Hari ini Tanggal: *${formattedDate}*
-Prefix: ${CommandOptions["COMMAND-PREFIXES"]}
+Hari ini Tanggal: *${formatDateTime()}*
+Prefix: ${commandOptions["COMMAND-PREFIXES"]}
 
 Ketik /menu atau /help untuk menampilkan list menu!
 List Menu:
 `;
-    Object.keys(MenuList)
-      .sort()
-      .forEach((mname) => {
-        menu += `*[ ${mname} ]*\n`;
-        MenuList[mname].sort().forEach((cmd) => {
-          menu += ` *${CommandOptions["COMMAND-PREFIXES"][0]}${cmd}*`;
-          const Params = getParameterNames(FunctionCommand[cmd]);
-          Params.shift();
-          Params.shift();
-          Params.forEach((element) => {
-            menu += ` <${element}>`;
-          });
-          if (FunctionDetails[cmd]) {
-            if (FunctionDetails[cmd].description) {
-              menu += ` - _${FunctionDetails[cmd].description}_ ${
-                FunctionDetails[cmd].owneronly ? "(Owner only)" : ""
-              } ${FunctionDetails[cmd].admingroup ? "(GC admin)" : ""}`;
-            }
-          }
-          menu += "\n";
+
+  Object.keys(MenuList)
+    .sort()
+    .forEach(menuName => {
+      menu += `*[ ${menuName} ]*\n`;
+      MenuList[menuName]
+        .sort()
+        .forEach(cmd => {
+          menu += buildCommandString(cmd, prefix) + '\n';
         });
-        menu += "\n";
-      });
-    await sock.sendMessage(
-      msg?.key?.remoteJid,
-      {
-        image: { url: "./media/MeeI-Bot.png" }, // Change this to the path of your image or change image to video to use gif
-        caption: menu,
-        // gifPlayback: true // Uncomment this line if you want to play the gif
-      },
-      { quoted: msg }
-    );
-  },
-  help: async (data) => {
-    return module.exports.menu(data);
-  },
+      menu += '\n';
+    });
+
+  return menu;
+};
+
+const menuHandler = async ({ sock, msg }) => {
+  const remoteJid = msg?.key?.participant ?? msg?.key?.remoteJid;
+  
+  const [datafile, userData] = await Promise.all([
+    config_file.Config.ReadConfig(),
+    db.sql.select().from(db.userTable).where(db.eq(db.userTable.id, remoteJid)).then(res => res[0])
+  ]);
+
+  const menu = generateMenu(userData, datafile["CommandOptions"], msg?.pushName);
+
+  await sock.sendMessage(
+    msg?.key?.remoteJid,
+    {
+      image: { url: "./media/MeeI-Bot.png" },
+      caption: menu,
+    },
+    { quoted: msg }
+  );
+};
+
+module.exports = {
+  menu: menuHandler,
+  help: menuHandler,
 };
