@@ -27,16 +27,20 @@ store.readFromFile("./baileys_store.json");
 setInterval(() => {
   store.writeToFile("./baileys_store.json");
 }, 10_000);
-const groupCache = new NodeCache({ stdTTL: 5 * 60, useClones: false })
 
+const groupCache = new NodeCache({ stdTTL: 5 * 60, useClones: false });
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
+const RECONNECT_DELAY = 5000;
 
 async function WhatsappEvent() {
   await LoadMenu();
-  const { error, version } = await fetchLatestBaileysVersion()
+  const { error, version } = await fetchLatestBaileysVersion();
   if (error) {
     console.error("Error fetching latest Baileys version:", error);
     return WhatsappEvent();
   }
+  
   const { state, saveCreds } = await useMySQLAuthState({
     session: "session_1",
     user: process.env.MYSQL_USER,
@@ -46,6 +50,7 @@ async function WhatsappEvent() {
     database: process.env.MYSQL_DATABASE,
     tableName: "auth"
   });
+  
   const sock = makeWASocket({
     shouldSyncHistoryMessages: false,
     syncFullHistory: false,
@@ -54,6 +59,8 @@ async function WhatsappEvent() {
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
     version,
+    defaultQueryTimeoutMs: 60000,
+    keepAliveIntervalMs: 30000,
     cachedGroupMetadata: async (jid) => groupCache.get(jid),
     getMessage: async (key) => {
       const data = await store.loadMessage(key.remoteJid, key.id);
@@ -81,18 +88,20 @@ async function WhatsappEvent() {
   
       return message;
     },
-    defaultQueryTimeoutMs: undefined
+    retryRequestDelayMs: 250,
+    maxMsgRetryCount: 3,
+    browser: ["MeeI-Bot", "Chrome", "1.0.0"],
   });
 
   sock.ev.on('groups.update', async ([event]) => {
-    const metadata = await sock.groupMetadata(event.id)
-    groupCache.set(event.id, metadata)
-  })
+    const metadata = await sock.groupMetadata(event.id);
+    groupCache.set(event.id, metadata);
+  });
 
   sock.ev.on('group-participants.update', async (event) => {
-    const metadata = await sock.groupMetadata(event.id)
-    groupCache.set(event.id, metadata)
-  })
+    const metadata = await sock.groupMetadata(event.id);
+    groupCache.set(event.id, metadata);
+  });
 
   const worker = new Worker("./utilities/earthquake-worker.js");
 
@@ -100,7 +109,6 @@ async function WhatsappEvent() {
     earthquake.handler(data, sock);
   });
 
-  // Handle errors
   worker.on("error", (e) => {
     console.error("Worker error:", e);
   });
@@ -112,42 +120,74 @@ async function WhatsappEvent() {
   });
 
   sock.ev.on('contacts.upsert', () => {
-    console.log('got contacts', Object.values(store.contacts))
-  })
+    console.log('got contacts', Object.values(store.contacts));
+  });
 
   sock.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect, qr } = update || {};
+    
     if (qr) {
       console.log(await QRCode.toString(qr, {type:'terminal', small: true, scale: 1}));
     }
 
     if (connection === "open") {
       earthquake.active = true;
-      console.log("Connection opened");
+      reconnectAttempts = 0;
+      console.log(colors.FgGreen + "Connection opened successfully!" + colors.Reset);
+      
       if (Config?.debug) {
         await sock.sendMessage(`${Config?.Owner}@s.whatsapp.net`, {
-          text: `[DEBUG] Bot is online!`,
+          text: `[DEBUG] Bot is online! Connected at ${new Date().toLocaleString()}`,
         });
       }
     }
 
     if (connection === "close") {
-      const shouldReconnect =
-        lastDisconnect?.error?.output?.statusCode !==
-        DisconnectReason.loggedOut;
-      if (shouldReconnect) {
-        console.log("Reconnecting...");
+      const statusCode = lastDisconnect?.error?.output?.statusCode;
+      const errorMessage = lastDisconnect?.error?.message || "Unknown error";
+      
+      console.log(colors.FgRed + `Connection closed. Status: ${statusCode}, Error: ${errorMessage}` + colors.Reset);
+      
+      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+      
+      if (shouldReconnect && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        reconnectAttempts++;
+        console.log(colors.FgYellow + `Attempting to reconnect... (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})` + colors.Reset);
+        
         worker
           .terminate()
           .then(() => {
-            // console.log("\nLoading complete");
+            console.log("Worker terminated successfully");
           })
           .catch((error) => {
             console.error("Error stopping worker:", error);
           });
-        await WhatsappEvent(); // Ensure to wait for reconnection
+        
+        setTimeout(async () => {
+          try {
+            await WhatsappEvent();
+          } catch (error) {
+            console.error("Reconnection failed:", error);
+            setTimeout(() => WhatsappEvent(), RECONNECT_DELAY * reconnectAttempts);
+          }
+        }, RECONNECT_DELAY);
+        
+      } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        console.log(colors.FgRed + "Max reconnection attempts reached. Stopping bot." + colors.Reset);
+        process.exit(1);
+      } else {
+        console.log(colors.FgRed + "Bot logged out. Manual intervention required." + colors.Reset);
+        process.exit(0);
       }
     }
+
+    if (connection === "connecting") {
+      console.log(colors.FgYellow + "Connecting to WhatsApp..." + colors.Reset);
+    }
+  });
+
+  sock.ev.on('connection.error', (error) => {
+    console.error(colors.FgRed + "Connection error:", error + colors.Reset);
   });
 
   sock.ev.on("messages.upsert", async (m) => {
@@ -163,6 +203,20 @@ async function WhatsappEvent() {
   });
 
   sock.ev.on("creds.update", saveCreds);
+
+  setInterval(async () => {
+    try {
+      if (sock?.user) {
+        await sock.query({
+          tag: 'iq',
+          attrs: { type: 'get', xmlns: 'urn:xmpp:ping' }
+        });
+        console.log("Keep-alive ping sent");
+      }
+    } catch (error) {
+      console.log("Keep-alive ping failed:", error.message);
+    }
+  }, 30000);
 }
 
 figlet("MeeI-Bot", (err, data) => {
@@ -177,9 +231,8 @@ figlet("MeeI-Bot", (err, data) => {
 console.log("Starting Bot...");
 process.on('SIGINT', async () => {
   console.log('\n🛑 Ctrl+C detected! Cleaning up...');
-  // Do cleanup here
   await closeBrowser();
-  process.exit(0); // Exit gracefully
+  process.exit(0);
 });
 
 await WhatsappEvent();
