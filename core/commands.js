@@ -4,157 +4,160 @@ const { Config } = require('../config.js');
 const { LoadMenu } = require('../load-menu.js');
 const config_file = require('../utilities/database.js');
 const db = require('../database');
-const xp =  require('../utilities/xp.js');
+const xp = require('../utilities/xp.js');
 
-function hasPrefix(command, prefixes) {
-    return prefixes.some(prefix => command.startsWith(prefix));
-}
+const hasPrefix = (command, prefixes) => 
+    prefixes.some(prefix => command.startsWith(prefix));
 
-function getCommandWithoutPrefix(command, prefixes) {
-    for (const prefix of prefixes) {
-        if (command.startsWith(prefix)) {
-            return command.slice(prefix.length);
-        }
+const getCommandWithoutPrefix = (command, prefixes) => {
+    const prefix = prefixes.find(p => command.startsWith(p));
+    return prefix ? command.slice(prefix.length) : command;
+};
+
+const sendMessage = async (sock, jid, text) => 
+    await sock.sendMessage(jid, { text });
+
+const extractUserId = (data, isGroup) => 
+    isGroup ? data?.key?.participant : data?.key?.remoteJid;
+
+const isOwner = (data, isGroup) => {
+    const userId = extractUserId(data, isGroup);
+    return Config.Owner === userId?.replace("@s.whatsapp.net", "");
+};
+
+const validateUserInDatabase = async (userId, pushName, sock, jid) => {
+    const userExists = await db.sql.select()
+        .from(db.userTable)
+        .where(db.eq(db.userTable.id, userId))
+        .then(res => res.length === 1);
+
+    if (!userExists) {
+        await sendMessage(sock, jid, "Anda belum terdaftar di database, tunggu sebentar kami akan mendaftarkan anda secara otomatis...");
+        await db.sql.insert(db.userTable).values({
+            id: userId,
+            name: pushName,
+            xp: 0,
+            level: 0,
+            premium: false
+        });
+        await sendMessage(sock, jid, "Daftar selesai!");
     }
-    return command;
-}
+};
 
-var enable_bot = false;
+const checkGroupAdmin = async (data, sock) => {
+    const metadata = await store.fetchGroupMetadata(data?.key?.jid, sock);
+    const participant = metadata.participants.find(p => p.id === data?.key?.participant);
+    return participant?.admin === "superadmin" || participant?.admin === "admin";
+};
+
+const logCommand = async (userId, commandName, isGroup, args) => {
+    await db.sql.insert(db.commandLogTable).values({
+        id: userId,
+        command: commandName,
+        isGroup,
+        args: args.join(" ")
+    });
+};
+
+let enable_bot = false;
+
+const SYSTEM_COMMANDS = {
+    reloadmenu: async (sock, jid) => {
+        await LoadMenu();
+        await sendMessage(sock, jid, "Menu telah direload!");
+    },
+    enablebot: async (sock, jid) => {
+        enable_bot = true;
+        await sendMessage(sock, jid, "Bot telah diaktifkan!");
+    },
+    disablebot: async (sock, jid) => {
+        enable_bot = false;
+        await sendMessage(sock, jid, "Bot telah dinonaktifkan!");
+    }
+};
 
 async function Command(command, isGroup, sock, data) {
-    if (typeof command !== 'string') {
-        throw new TypeError('The "command" parameter must be a string.');
-    }
-    if (typeof isGroup !== 'boolean') {
-        throw new TypeError('The "isGroup" parameter must be a boolean.');
+    if (typeof command !== 'string' || typeof isGroup !== 'boolean') {
+        throw new TypeError('Invalid parameter types');
     }
 
-    if (data?.fromMe)
-        return;
-    
+    if (data?.fromMe) return;
+
     const config = await config_file.Config.ReadConfig();
-    const CommandOptions = config["CommandOptions"];
+    const commandOptions = config["CommandOptions"];
 
-    if (!hasPrefix(command, CommandOptions["COMMAND-PREFIXES"]))
+    if (!hasPrefix(command, commandOptions["COMMAND-PREFIXES"])) return false;
+
+    const args = command.split(" ");
+    const commandWithoutPrefix = getCommandWithoutPrefix(args[0], commandOptions["COMMAND-PREFIXES"]);
+    const jid = data?.key?.remoteJid;
+    const ownerStatus = isOwner(data, isGroup);
+
+    if (commandOptions["GROUP-ONLY"].includes(commandWithoutPrefix) && !isGroup) {
+        await sendMessage(sock, jid, 'Sorry this command is only for group chat!');
         return false;
+    }
+
+    if (commandOptions["PRIVATE-ONLY"].includes(commandWithoutPrefix) && isGroup) {
+        await sendMessage(sock, jid, 'Sorry this command is only for private chat!');
+        return false;
+    }
+
+    if (SYSTEM_COMMANDS[commandWithoutPrefix] && ownerStatus) {
+        await SYSTEM_COMMANDS[commandWithoutPrefix](sock, jid);
+        return true;
+    }
+
+    if (!enable_bot) return false;
+
+    if (!FunctionCommand[commandWithoutPrefix]) return true;
+
+    const funcDetails = FunctionDetails[commandWithoutPrefix];
     
-    let Args = command.split(" ");
-    const CommandWithoutPrefix = getCommandWithoutPrefix(Args[0], CommandOptions["COMMAND-PREFIXES"]);
-
-
-    // console.log(CommandOptions, isGroup);
-    if (CommandOptions["GROUP-ONLY"].includes(CommandWithoutPrefix) && isGroup == false) {
-        await sock.sendMessage(data?.key?.remoteJid, { text: 'Sorry this command is only for group chat!' });
+    if (funcDetails.owneronly && !ownerStatus) {
+        await sendMessage(sock, jid, "This command is only for bot owner!");
         return false;
     }
 
-    if (CommandOptions["PRIVATE-ONLY"].includes(CommandWithoutPrefix) && isGroup == true) {
-        await sock.sendMessage(data?.key?.remoteJid, { text: 'Sorry this command is only for private chat!' });
+    if (funcDetails.admingroup) {
+        if (!isGroup) {
+            await sendMessage(sock, jid, "This command is only for group chat!");
+            return false;
+        }
+        
+        const isAdmin = await checkGroupAdmin(data, sock);
+        if (!isAdmin) {
+            await sendMessage(sock, jid, "This command is only for group admin!");
+            return false;
+        }
+    }
+
+    const func = FunctionCommand[commandWithoutPrefix];
+    const requiredArgs = func.length - 1;
+    args.shift();
+
+    if (args.length < requiredArgs) {
+        await sendMessage(sock, jid, "Need more arguments!");
         return false;
     }
 
-    const isOwner = (data?.key?.participant ? (Config.Owner == data?.key?.participant.replace("@s.whatsapp.net", "")) : (Config.Owner == data?.key?.remoteJid.replace("@s.whatsapp.net", "")));
+    const processedArgs = requiredArgs === 1 && args.length > 1 ? [args.join(" ")] : args;
+    const userId = extractUserId(data, isGroup);
 
-    if (CommandWithoutPrefix == "reloadmenu" && isOwner) {
-        await LoadMenu();
-        await sock.sendMessage(data?.key?.remoteJid, { text: "Menu telah direload!"});
-        return true;
+    await validateUserInDatabase(userId, data.pushName, sock, jid);
+    await xp.add({ remoteJid: userId, sock, msg: data });
+
+    try {
+        await logCommand(userId, commandWithoutPrefix, isGroup, processedArgs);
+        await func({ sock, msg: data, isGroup }, ...processedArgs);
+    } catch (error) {
+        await sendMessage(sock, jid, "Caught an error, please report to owner /bug <message>");
+        await sendMessage(sock, `${Config.Owner}@s.whatsapp.net`, 
+            `[ERROR REPORT]\nCommand: *${commandOptions["COMMAND-PREFIXES"][0]}${commandWithoutPrefix}*\nError: _${error.message}_\nStack Trace: _${error.stack}_`
+        );
     }
 
-    if (CommandWithoutPrefix == "enablebot" && isOwner) {
-        enable_bot = true;
-        await sock.sendMessage(data?.key?.remoteJid, { text: "Bot telah diaktifkan!"});
-        return true;
-    }
-
-    if (CommandWithoutPrefix == "disablebot" && isOwner) {
-        enable_bot = false;
-        await sock.sendMessage(data?.key?.remoteJid, { text: "Bot telah dinonaktifkan!"});
-        return true;
-    }
-
-    // Do not read if not enabled, because when initial load, it will read all messages
-    if (!enable_bot)
-        return false;
-
-    if (FunctionCommand[CommandWithoutPrefix]) {
-        if (FunctionDetails[CommandWithoutPrefix].owneronly && !isOwner) {
-            await sock.sendMessage(data?.key?.remoteJid, { text: "This command is only for bot owner!"});
-            return false;
-        }
-
-        console.log(FunctionDetails[CommandWithoutPrefix]);
-
-        if (FunctionDetails[CommandWithoutPrefix].admingroup && isGroup) {
-            const metadata = await store.fetchGroupMetadata(data?.key?.jid, sock);
-            let isAdmin = false;
-            for (const participant of metadata.participants) {
-                if (participant.id == data?.key?.participant) {
-                    if (participant.admin == "superadmin" || participant.admin == "admin")
-                        isAdmin = true;
-                    break;
-                }
-            }
-            if (!isAdmin)
-                await sock.sendMessage(data?.key?.remoteJid, { text: "This command is only for group admin!"});
-            return false;
-        }
-
-        if (FunctionDetails[CommandWithoutPrefix].admingroup && !isGroup) {
-            await sock.sendMessage(data?.key?.remoteJid, { text: "This command is only for group chat!"});
-            return false;
-        }
-
-        const Func = FunctionCommand[CommandWithoutPrefix];
-        const FuncParameterLength = Func.length - 1;
-        Args.shift();
-        if ((Args.length) < FuncParameterLength) {
-            await sock.sendMessage(data?.key?.remoteJid, { text: "Need more arguments!"});
-        } else {
-            if (FuncParameterLength === 1 && Args.length > 1) {
-                Args = [Args.join(" ")];
-            }
-            
-            const remoteJid = isGroup ? data?.key?.participant : data?.key?.remoteJid;
-            const userdata = await db.sql.select().from(db.userTable).where(db.eq(db.userTable.id, remoteJid)).then(res => res.length == 1);
-            if (!userdata) {
-                await sock.sendMessage(data?.key?.remoteJid, { text: "Anda belum terdaftar di database, tunggu sebentar kami akan mendaftarkan anda secara otomatis..." });
-                await db.sql.insert(db.userTable).values({
-                    id: remoteJid,
-                    name: data.pushName,
-                    xp: 0,
-                    level: 0,
-                    premium: false
-                });
-                await sock.sendMessage(data?.key?.remoteJid, { text: "Daftar selesai!" });
-            }
-
-            await xp.add({remoteJid, sock, msg: data});
-            
-            try {
-                const checkUserdata = await db.sql.select().from(db.userTable).where(db.eq(db.userTable.id, remoteJid)).then(res => res.length == 1);
-                if (!checkUserdata)
-                    await sock.sendMessage(data?.key?.remoteJid, { text: "Anda belum terdaftar di database, kesalahan kode?? Tunggu sebentar" });
-                await db.sql.insert(db.commandLogTable).values({
-                    id: remoteJid,
-                    command: CommandWithoutPrefix,
-                    isGroup: isGroup,
-                    args: Args.join(" "),
-                });
-                await Func({sock, msg: data, isGroup}, ...Args);
-            } catch (error) {
-                await sock.sendMessage(data?.key?.remoteJid, { text: "Caught an error, please report to owner /bug <message>"});
-                await sock.sendMessage(Config.Owner+"@s.whatsapp.net", { text: `[ERROR REPORT]
-Command: *${CommandOptions["COMMAND-PREFIXES"][0]}${CommandWithoutPrefix}*
-Error: _${error.message}_
-Stack Trace: _${error.stack}_
-                ` });
-            }
-        }
-    }
     return true;
 }
 
-module.exports = {
-    Command
-};
+module.exports = { Command };
