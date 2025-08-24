@@ -47,7 +47,7 @@
   "devDependencies": {
     "@types/bun": "^1.2.20",
     "drizzle-kit": "^0.31.4",
-    "tsx": "^4.20.4"
+    "tsx": "^4.20.5"
   },
   "peerDependencies": {
     "typescript": "^5.7.2"
