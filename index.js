@@ -2,7 +2,7 @@ import { closeBrowser } from "./browser.js";
 
 const {
   DisconnectReason,
-  makeCacheableSignalKeyStore, fetchLatestBaileysVersion, makeWASocket
+  makeCacheableSignalKeyStore, fetchLatestBaileysVersion, makeWASocket, Browsers
 } = require("baileys");
 
 const QRCode = require("qrcode");
@@ -90,7 +90,7 @@ async function WhatsappEvent() {
     },
     retryRequestDelayMs: 250,
     maxMsgRetryCount: 3,
-    browser: ["MeeI-Bot", "Chrome", "1.0.0"],
+    browser: Browsers.windows("Desktop"),
   });
 
   sock.ev.on('groups.update', async ([event]) => {
