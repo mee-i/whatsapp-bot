@@ -1,9 +1,9 @@
-const db = require("../database");
+const { db, messageNotificationTable, eq } = require("../database");
 
 async function notifgempa({ sock, msg }, latitude, longitude) {
 
-    const Exists = await db.sql.select().from(db.messageNotificationTable).where(
-        db.eq(db.messageNotificationTable.id, msg?.key?.remoteJid)
+    const Exists = await db.select().from(messageNotificationTable).where(
+        eq(messageNotificationTable.id, msg?.key?.remoteJid)
     ).then(res => res.length == 1);
 
     const lat = parseFloat(latitude);
@@ -17,7 +17,7 @@ async function notifgempa({ sock, msg }, latitude, longitude) {
     }
 
     if (!Exists) {
-        await db.sql.insert(db.messageNotificationTable).values({
+        await db.insert(messageNotificationTable).values({
             id: msg?.key?.remoteJid,
             lat: lat,
             lon: lon
@@ -30,13 +30,13 @@ async function notifgempa({ sock, msg }, latitude, longitude) {
 }
 
 async function matikannotifgempa({ sock, msg }) {
-    const Exists = await db.sql.select().from(db.messageNotificationTable).where(
-        db.messageNotificationTable.id.equals(msg?.key?.remoteJid)
+    const Exists = await db.select().from(messageNotificationTable).where(
+        messageNotificationTable.id.equals(msg?.key?.remoteJid)
     ).then(res => res.length == 1);
 
     if (Exists) {
-        await db.sql.delete(db.messageNotificationTable).where(
-            db.messageNotificationTable.id.equals(msg?.key?.remoteJid)
+        await db.delete(messageNotificationTable).where(
+            messageNotificationTable.id.equals(msg?.key?.remoteJid)
         );
         await sock.sendMessage(msg?.key?.remoteJid, { text: "Notifikasi gempa *dinonaktifkan* di chat ini." });
     }

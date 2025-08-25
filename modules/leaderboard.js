@@ -1,8 +1,8 @@
-const db = require('../database');
+const { db, userTable } = require('../database');
 
 module.exports = {
     leaderboard: async ({sock, msg}) => {
-        const data = await db.sql.select().from(db.userTable);
+        const data = await db.select().from(userTable);
         console.log(data);
         const sorted = Object.keys(data).sort((a, b) => data[b].xp - data[a].xp);
         console.log(sorted);

@@ -5,7 +5,7 @@ const {
   Config,
 } = require("../config.js");
 
-const db = require("../database");
+const { db, userTable, eq } = require("../database");
 const config_file = require("../utilities/database.js");
 const xp = require("../utilities/xp.js");
 
@@ -81,7 +81,7 @@ const menuHandler = async ({ sock, msg }) => {
   
   const [datafile, userData] = await Promise.all([
     config_file.Config.ReadConfig(),
-    db.sql.select().from(db.userTable).where(db.eq(db.userTable.id, remoteJid)).then(res => res[0])
+    db.select().from(userTable).where(eq(userTable.id, remoteJid)).then(res => res[0])
   ]);
 
   const menu = generateMenu(userData, datafile["CommandOptions"], msg?.pushName);
