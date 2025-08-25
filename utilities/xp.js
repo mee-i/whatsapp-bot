@@ -1,5 +1,5 @@
 
-const db = require('../database');
+const { db, userTable, eq } = require('../database');
 
 const baseXP = 100;
 
@@ -12,8 +12,8 @@ function getNextLevelXP(level) {
 }
 
 async function add({ remoteJid, sock, msg }) {
-  const [userdata] = await db.sql.select().from(db.userTable)
-    .where(db.eq(db.userTable.id, remoteJid));
+  const [userdata] = await db.select().from(userTable)
+    .where(eq(userTable.id, remoteJid));
 
   userdata.xp += 25;
 
@@ -33,12 +33,12 @@ XP untuk level berikutnya: ${getNextLevelXP(userdata.level)}`,
     });
   }
 
-  await db.sql.update(db.userTable)
+  await db.update(userTable)
     .set({
       xp: userdata.xp,
       level: userdata.level
     })
-    .where(db.eq(db.userTable.id, remoteJid));
+    .where(eq(userTable.id, remoteJid));
 }
 
 

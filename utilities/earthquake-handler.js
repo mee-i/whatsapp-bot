@@ -1,6 +1,6 @@
 const { Config } = require("../config");
 const { fetchGroupMetadata } = require("../core/memory-store");
-const db = require("../database");
+const { db, messageNotificationTable, earthquakeTable, eq } = require("../database");
 
 const haversineDistance = (lat1, lon1, lat2, lon2) => {
     const toRad = deg => deg * Math.PI / 180;
@@ -33,7 +33,7 @@ Source: BMKG
 
 const sendNotifications = async (data, sock, radius) => {
     try {
-        const notifications = await db.sql.select().from(db.messageNotificationTable);
+        const notifications = await db.select().from(messageNotificationTable);
         const { lintang: lat, bujur: lon } = data;
         
         const sendPromises = notifications
@@ -90,10 +90,10 @@ module.exports = {
         
         try {
             // Cek apakah record sudah ada dengan error handling
-            const existingRecord = await db.sql
+            const existingRecord = await db
                 .select()
-                .from(db.earthquakeTable)
-                .where(db.eq(db.earthquakeTable.event_id, eventId))
+                .from(earthquakeTable)
+                .where(eq(earthquakeTable.event_id, eventId))
                 .catch(error => {
                     console.error('Database query error:', error);
                     // Return empty array jika ada error, supaya proses bisa lanjut
@@ -121,7 +121,7 @@ module.exports = {
             // Parallel execution dengan error handling terpisah
             const [notificationResult, insertResult] = await Promise.allSettled([
                 sendNotifications({...data, event_id: eventId}, sock, radius),
-                db.sql.insert(db.earthquakeTable).values({
+                db.insert(earthquakeTable).values({
                     event_id: eventId,
                     status: data.status,
                     waktu: data.waktu,

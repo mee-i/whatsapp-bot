@@ -3,7 +3,7 @@ const { FunctionCommand, FunctionDetails } = require('../config.js');
 const { Config } = require('../config.js');
 const { LoadMenu } = require('../load-menu.js');
 const config_file = require('../utilities/database.js');
-const db = require('../database');
+const { db, userTable, commandLogTable, eq } = require('../database');
 const xp = require('../utilities/xp.js');
 
 const hasPrefix = (command, prefixes) => 
@@ -26,14 +26,14 @@ const isOwner = (data, isGroup) => {
 };
 
 const validateUserInDatabase = async (userId, pushName, sock, jid) => {
-    const userExists = await db.sql.select()
-        .from(db.userTable)
-        .where(db.eq(db.userTable.id, userId))
+    const userExists = await db.select()
+        .from(userTable)
+        .where(eq(userTable.id, userId))
         .then(res => res.length === 1);
 
     if (!userExists) {
         await sendMessage(sock, jid, "Anda belum terdaftar di database, tunggu sebentar kami akan mendaftarkan anda secara otomatis...");
-        await db.sql.insert(db.userTable).values({
+        await db.insert(userTable).values({
             id: userId,
             name: pushName,
             xp: 0,
@@ -51,7 +51,7 @@ const checkGroupAdmin = async (data, sock) => {
 };
 
 const logCommand = async (userId, commandName, isGroup, args) => {
-    await db.sql.insert(db.commandLogTable).values({
+    await db.insert(commandLogTable).values({
         id: userId,
         command: commandName,
         isGroup,
