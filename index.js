@@ -1,3 +1,4 @@
+import { unlink } from "node:fs";
 import { closeBrowser } from "./browser.js";
 
 const {
@@ -112,20 +113,10 @@ class WhatsAppBot {
         logger.info("Worker terminated");
       }
 
-      if (this.sock) {
-        try {
-          await this.sock.logout();
-        } catch (error) {
-          logger.warn("Error during logout:", error.message);
-        }
-        this.sock = null;
-      }
-
       try {
-        store.writeToFile("./baileys_store.json");
-        logger.info("Final store write completed");
+        unlink("./baileys_store.json");
       } catch (error) {
-        logger.error("Failed final store write:", error);
+        logger.error("Failed delete stored chat: ", error);
       }
 
       await closeBrowser();
