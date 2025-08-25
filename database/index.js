@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { sql as sql_query } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 const poolConnection = mysql.createPool({
     host: process.env.MYSQL_HOST,
@@ -11,8 +11,8 @@ const poolConnection = mysql.createPool({
     database: process.env.MYSQL_DATABASE,
 });
 export const increment = (column, value = 1) => {
-    return sql_query`${column} + ${value}`;
+    return sql`${column} + ${value}`;
 }
-export const sql = drizzle({ client: poolConnection });
+export const db = drizzle({ client: poolConnection });
 export * from "drizzle-orm";
 export * from "./schema.js";
