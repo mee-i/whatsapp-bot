@@ -27,8 +27,7 @@ const createMessage = (data, distance, radius, isDebug = false) => {
 *Event ID:* ${data.event_id || data.eventid}
 *Status:* ${data.status}
 
-Data ini realtime dari BMKG
-https://inatews.bmkg.go.id/wrs/index.html
+Source: BMKG
 `;
 };
 
@@ -102,7 +101,7 @@ module.exports = {
                 });
                 
             if (existingRecord && existingRecord.length > 0) {
-                console.log(`Event ${eventId} sudah ada di database, skip processing`);
+                // console.log(`Event ${eventId} sudah ada di database, skip processing`);
                 return;
             }
             
