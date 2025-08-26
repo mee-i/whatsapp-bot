@@ -64,11 +64,6 @@ class WhatsAppBot {
 
     initializeStore() {
         try {
-            writeFile("./baileys_store.json", "{}");
-        } catch (error) {
-            logger.error("Failed to create store file:", error);
-        }
-        try {
             store.readFromFile("./baileys_store.json");
             logger.info("Store loaded successfully");
         } catch (error) {
@@ -120,11 +115,18 @@ class WhatsAppBot {
                 logger.info("Worker terminated");
             }
 
+            // try {
+            //     unlink("./baileys_store.json");
+            //     logger.info("Deleted stored chat file");
+            // } catch (error) {
+            //     logger.error("Failed delete stored chat: ", error);
+            // }
+
             try {
-                unlink("./baileys_store.json");
-                logger.info("Deleted stored chat file");
+                store.writeToFile("./baileys_store.json");
+                logger.info("Last store saved successfully");
             } catch (error) {
-                logger.error("Failed delete stored chat: ", error);
+                logger.error("Failed to save store:", error);
             }
 
             await closeBrowser();
