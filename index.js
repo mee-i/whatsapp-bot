@@ -122,6 +122,7 @@ class WhatsAppBot {
 
             try {
                 unlink("./baileys_store.json");
+                logger.info("Deleted stored chat file");
             } catch (error) {
                 logger.error("Failed delete stored chat: ", error);
             }
