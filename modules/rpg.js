@@ -284,23 +284,7 @@ async function fishing({ sock, msg }) {
             return;
         }
 
-        if (!caughtFish) {
-            await db
-                .update(userTable)
-                .set({ last_fishing: currentTime })
-                .where(eq(userTable.id, remoteJid));
-
-            await sock.sendMessage(
-                msg.key.remoteJid,
-                {
-                    text: "🎣 You didn't catch anything this time. Better luck next time!",
-                },
-                { quoted: msg }
-            );
-            return;
-        }
-
-        const xpGain = Math.floor(caughtFish.value / 20);
+        const xpGain = Math.floor(caughtFish.price * caughtFish.chance);
 
         await db
             .update(userTable)
