@@ -1,4 +1,4 @@
-const { db, userTable, eq } = require("../database");
+const { db, userTable, itemsTable, userBankTable, userInventoryTable, eq } = require("../database");
 
 function getRandomFish(fishes) {
     const random = Math.random(); // 0 - 1
@@ -138,8 +138,8 @@ async function balance({ sock, msg }) {
 
         const bankData = await db
             .select()
-            .from(db.userBankTable)
-            .where(eq(db.userBankTable.user_id, remoteJid))
+            .from(userBankTable)
+            .where(eq(userBankTable.user_id, remoteJid))
             .then((res) => res[0]);
 
         const bankBalance = bankData ? bankData.balance : 0;
@@ -263,8 +263,8 @@ async function fishing({ sock, msg }) {
 
         const fishes = await db
             .select()
-            .from(db.itemsTable)
-            .where(eq(db.itemsTable.category, "fish"));
+            .from(itemsTable)
+            .where(eq(itemsTable.category, "fish"));
 
         const caughtFish = getRandomFish(fishes);
 
@@ -311,7 +311,7 @@ async function fishing({ sock, msg }) {
             .where(eq(userTable.id, remoteJid));
 
         await db
-            .insert(db.userInventoryTable)
+            .insert(userInventoryTable)
             .values({
                 user_id: remoteJid,
                 item_id: caughtFish.id,
@@ -350,17 +350,17 @@ async function inventory({ sock, msg }) {
 
         const userItems = await db
             .select({
-                item_name: db.itemsTable.name,
-                quantity: db.userInventoryTable.quantity,
-                category: db.itemsTable.category,
-                rarity: db.itemsTable.rarity,
+                item_name: itemsTable.name,
+                quantity: userInventoryTable.quantity,
+                category: itemsTable.category,
+                rarity: itemsTable.rarity,
             })
-            .from(db.userInventoryTable)
+            .from(userInventoryTable)
             .leftJoin(
-                db.itemsTable,
-                eq(db.userInventoryTable.item_id, db.itemsTable.id)
+                itemsTable,
+                eq(userInventoryTable.item_id, itemsTable.id)
             )
-            .where(eq(db.userInventoryTable.user_id, remoteJid));
+            .where(eq(userInventoryTable.user_id, remoteJid));
 
         if (userItems.length === 0) {
             await sock.sendMessage(
@@ -419,12 +419,12 @@ async function bank({ sock, msg }) {
 
         const bankData = await db
             .select()
-            .from(db.userBankTable)
-            .where(eq(db.userBankTable.user_id, remoteJid))
+            .from(userBankTable)
+            .where(eq(userBankTable.user_id, remoteJid))
             .then((res) => res[0]);
 
         if (!bankData) {
-            await db.insert(db.userBankTable).values({
+            await db.insert(userBankTable).values({
                 user_id: remoteJid,
                 balance: 0,
             });
@@ -485,20 +485,20 @@ async function deposit({ sock, msg }, amount) {
         // Check if bank account exists
         let bankData = await db
             .select()
-            .from(db.userBankTable)
-            .where(eq(db.userBankTable.user_id, remoteJid))
+            .from(userBankTable)
+            .where(eq(userBankTable.user_id, remoteJid))
             .then((res) => res[0]);
 
         if (!bankData) {
-            await db.insert(db.userBankTable).values({
+            await db.insert(userBankTable).values({
                 user_id: remoteJid,
                 balance: depositAmount,
             });
         } else {
             await db
-                .update(db.userBankTable)
+                .update(userBankTable)
                 .set({ balance: bankData.balance + depositAmount })
-                .where(eq(db.userBankTable.user_id, remoteJid));
+                .where(eq(userBankTable.user_id, remoteJid));
         }
 
         await db
@@ -542,8 +542,8 @@ async function withdraw({ sock, msg }, amount) {
 
         const bankData = await db
             .select()
-            .from(db.userBankTable)
-            .where(eq(db.userBankTable.user_id, remoteJid))
+            .from(userBankTable)
+            .where(eq(userBankTable.user_id, remoteJid))
             .then((res) => res[0]);
 
         if (!bankData || bankData.balance < withdrawAmount) {
@@ -561,9 +561,9 @@ async function withdraw({ sock, msg }, amount) {
         }
 
         await db
-            .update(db.userBankTable)
+            .update(userBankTable)
             .set({ balance: bankData.balance - withdrawAmount })
-            .where(eq(db.userBankTable.user_id, remoteJid));
+            .where(eq(userBankTable.user_id, remoteJid));
 
         await db
             .update(userTable)
