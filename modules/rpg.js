@@ -25,7 +25,7 @@ function formatNumber(num) {
 }
 
 async function getUserData(userId) {
-    let userData = await db.sql
+    let userData = await db
         .select()
         .from(userTable)
         .where(eq(userTable.id, userId))
@@ -38,7 +38,7 @@ async function getUserData(userId) {
             name: "Unknown User",
         });
 
-        userData = await db.sql
+        userData = await db
             .select()
             .from(userTable)
             .where(eq(userTable.id, userId))
@@ -58,7 +58,7 @@ async function daily({ sock, msg }) {
         if (!userData.daily_time) {
             const randomMoney = getRandomInt(50, 500);
 
-            await db.sql
+            await db
                 .update(userTable)
                 .set({
                     daily_time: currentTime,
@@ -100,7 +100,7 @@ async function daily({ sock, msg }) {
         } else {
             const randomMoney = getRandomInt(50, 500);
 
-            await db.sql
+            await db
                 .update(userTable)
                 .set({
                     daily_time: currentTime,
@@ -136,7 +136,7 @@ async function balance({ sock, msg }) {
         const remoteJid = msg?.key?.participant ?? msg?.key?.remoteJid;
         const userData = await getUserData(remoteJid);
 
-        const bankData = await db.sql
+        const bankData = await db
             .select()
             .from(db.userBankTable)
             .where(eq(db.userBankTable.user_id, remoteJid))
@@ -206,7 +206,7 @@ async function work({ sock, msg }) {
         const earnings = getRandomInt(randomJob.min, randomJob.max);
         const xpGain = Math.floor(earnings / 10);
 
-        await db.sql
+        await db
             .update(userTable)
             .set({
                 last_work: currentTime,
@@ -261,7 +261,7 @@ async function fishing({ sock, msg }) {
             }
         }
 
-        const fishes = await db.sql
+        const fishes = await db
             .select()
             .from(db.itemsTable)
             .where(eq(db.itemsTable.category, "fish"));
@@ -269,7 +269,7 @@ async function fishing({ sock, msg }) {
         const caughtFish = getRandomFish(fishes);
 
         if (!caughtFish) {
-            await db.sql
+            await db
                 .update(userTable)
                 .set({ last_fishing: currentTime })
                 .where(eq(userTable.id, remoteJid));
@@ -285,7 +285,7 @@ async function fishing({ sock, msg }) {
         }
 
         if (!caughtFish) {
-            await db.sql
+            await db
                 .update(userTable)
                 .set({ last_fishing: currentTime })
                 .where(eq(userTable.id, remoteJid));
@@ -302,7 +302,7 @@ async function fishing({ sock, msg }) {
 
         const xpGain = Math.floor(caughtFish.value / 20);
 
-        await db.sql
+        await db
             .update(userTable)
             .set({
                 last_fishing: currentTime,
@@ -310,7 +310,7 @@ async function fishing({ sock, msg }) {
             })
             .where(eq(userTable.id, remoteJid));
 
-        await db.sql
+        await db
             .insert(db.userInventoryTable)
             .values({
                 user_id: remoteJid,
@@ -348,7 +348,7 @@ async function inventory({ sock, msg }) {
     try {
         const remoteJid = msg?.key?.participant ?? msg?.key?.remoteJid;
 
-        const userItems = await db.sql
+        const userItems = await db
             .select({
                 item_name: db.itemsTable.name,
                 quantity: db.userInventoryTable.quantity,
@@ -417,7 +417,7 @@ async function bank({ sock, msg }) {
     try {
         const remoteJid = msg?.key?.participant ?? msg?.key?.remoteJid;
 
-        const bankData = await db.sql
+        const bankData = await db
             .select()
             .from(db.userBankTable)
             .where(eq(db.userBankTable.user_id, remoteJid))
@@ -483,7 +483,7 @@ async function deposit({ sock, msg }, amount) {
         }
 
         // Check if bank account exists
-        let bankData = await db.sql
+        let bankData = await db
             .select()
             .from(db.userBankTable)
             .where(eq(db.userBankTable.user_id, remoteJid))
@@ -495,13 +495,13 @@ async function deposit({ sock, msg }, amount) {
                 balance: depositAmount,
             });
         } else {
-            await db.sql
+            await db
                 .update(db.userBankTable)
                 .set({ balance: bankData.balance + depositAmount })
                 .where(eq(db.userBankTable.user_id, remoteJid));
         }
 
-        await db.sql
+        await db
             .update(userTable)
             .set({ money: userData.money - depositAmount })
             .where(eq(userTable.id, remoteJid));
@@ -540,7 +540,7 @@ async function withdraw({ sock, msg }, amount) {
         const userData = await getUserData(remoteJid);
         const withdrawAmount = parseInt(amount);
 
-        const bankData = await db.sql
+        const bankData = await db
             .select()
             .from(db.userBankTable)
             .where(eq(db.userBankTable.user_id, remoteJid))
@@ -560,12 +560,12 @@ async function withdraw({ sock, msg }, amount) {
             return;
         }
 
-        await db.sql
+        await db
             .update(db.userBankTable)
             .set({ balance: bankData.balance - withdrawAmount })
             .where(eq(db.userBankTable.user_id, remoteJid));
 
-        await db.sql
+        await db
             .update(userTable)
             .set({ money: userData.money + withdrawAmount })
             .where(eq(userTable.id, remoteJid));
@@ -597,7 +597,7 @@ async function leaderboard({ sock, msg }, category = "money") {
 
         switch (category.toLowerCase()) {
             case "level":
-                query = db.sql
+                query = db
                     .select({
                         name: userTable.name,
                         value: userTable.level,
@@ -608,7 +608,7 @@ async function leaderboard({ sock, msg }, category = "money") {
                 title = "🏆 *Level Leaderboard*";
                 break;
             case "xp":
-                query = db.sql
+                query = db
                     .select({
                         name: userTable.name,
                         value: userTable.xp,
@@ -619,7 +619,7 @@ async function leaderboard({ sock, msg }, category = "money") {
                 title = "🏆 *XP Leaderboard*";
                 break;
             default:
-                query = db.sql
+                query = db
                     .select({
                         name: userTable.name,
                         value: userTable.money,
