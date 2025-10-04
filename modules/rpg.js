@@ -266,6 +266,11 @@ async function fishing({ sock, msg }) {
             .from(itemsTable)
             .where(eq(itemsTable.category, "fish"));
 
+        if (fishes.length === 0) {
+            await sock.sendMessage(msg.key.remoteJid, { text: "No fish in the water, sorry!" }, { quoted: msg });
+            return;
+        }
+
         const caughtFish = getRandomFish(fishes);
 
         if (!caughtFish) {
