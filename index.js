@@ -1,28 +1,23 @@
-import { unlink } from "node:fs";
 import { closeBrowser } from "./browser.js";
-
-const {
+import makeWASocket, {
     DisconnectReason,
     makeCacheableSignalKeyStore,
     fetchLatestBaileysVersion,
-    makeWASocket,
     Browsers,
-} = require("baileys");
-
-const QRCode = require("qrcode");
-
-const WAEvents = require("./core/events.js");
-const store = require("./core/memory-store.js");
-const colors = require("./utilities/colors.js");
-const Terminal = require("./utilities/terminal.js");
-const earthquake = require("./utilities/earthquake-handler.js");
-
-const figlet = require("figlet");
-const { Worker } = require("node:worker_threads");
-const { LoadMenu } = require("./load-menu.js");
-const NodeCache = require("node-cache");
-const { useMySQLAuthState } = require("mysql-baileys");
-const pino = require("pino");
+} from "@whiskeysockets/baileys";
+import QRCode from "qrcode";
+import WAEvents from "./core/events.js";
+import store from "./core/memory-store.js";
+import colors from "./utilities/colors.js";
+import Terminal from "./utilities/terminal.js";
+import earthquake from "./utilities/earthquake-handler.js";
+import figlet from "figlet";
+import { Worker } from "node:worker_threads";
+import { LoadMenu } from "./load-menu.js";
+import NodeCache from "node-cache";
+import { useMySQLAuthState } from "mysql-baileys";
+import pino from "pino";
+import { Config } from "./config.js";
 
 const logger = pino({
     level: process.env.LOG_LEVEL || "info",
@@ -36,8 +31,6 @@ const logger = pino({
     },
 });
 
-const { Config } = require("./config.js");
-
 class WhatsAppBot {
     constructor() {
         this.sock = null;
@@ -45,15 +38,21 @@ class WhatsAppBot {
         this.reconnectAttempts = 0;
         this.isShuttingDown = false;
         this.storeWriteInterval = null;
+        this.connectionRetryTimeout = null;
 
-        this.MAX_RECONNECT_ATTEMPTS =
-            parseInt(process.env.MAX_RECONNECT_ATTEMPTS) || 5;
-        this.RECONNECT_DELAY = parseInt(process.env.RECONNECT_DELAY) || 5000;
-        this.STORE_WRITE_INTERVAL =
-            parseInt(process.env.STORE_WRITE_INTERVAL) || 10000;
+        // Configuration
+        this.config = {
+            maxReconnectAttempts: parseInt(process.env.MAX_RECONNECT_ATTEMPTS) || 5,
+            reconnectDelay: parseInt(process.env.RECONNECT_DELAY) || 5000,
+            storeWriteInterval: parseInt(process.env.STORE_WRITE_INTERVAL) || 10000,
+            queryTimeout: parseInt(process.env.QUERY_TIMEOUT) || 60000,
+            keepAliveInterval: 30000,
+            maxBackoffDelay: 30000,
+        };
 
+        // Group metadata cache
         this.groupCache = new NodeCache({
-            stdTTL: 5 * 60,
+            stdTTL: 300, // 5 minutes
             useClones: false,
             checkperiod: 60,
         });
@@ -67,16 +66,20 @@ class WhatsAppBot {
             store.readFromFile("./baileys_store.json");
             logger.info("Store loaded successfully");
         } catch (error) {
-            logger.warn("Failed to load store, starting fresh:", error.message);
+            logger.warn(`Failed to load store, starting fresh: ${error.message}`);
         }
 
         this.storeWriteInterval = setInterval(() => {
-            try {
-                store.writeToFile("./baileys_store.json");
-            } catch (error) {
-                logger.error("Failed to write store:", error);
-            }
-        }, this.STORE_WRITE_INTERVAL);
+            this.saveStore();
+        }, this.config.storeWriteInterval);
+    }
+
+    saveStore() {
+        try {
+            store.writeToFile("./baileys_store.json");
+        } catch (error) {
+            logger.error("Failed to write store:", error);
+        }
     }
 
     setupProcessHandlers() {
@@ -84,53 +87,56 @@ class WhatsAppBot {
             if (this.isShuttingDown) return;
             this.isShuttingDown = true;
 
-            logger.info(`${signal} received! Shutting down gracefully...`);
+            logger.info(`${signal} received. Initiating graceful shutdown...`);
             await this.cleanup();
             process.exit(0);
         };
 
         process.on("SIGINT", () => gracefulShutdown("SIGINT"));
         process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+        
         process.on("uncaughtException", (error) => {
-            logger.error("Uncaught Exception:", error);
+            logger.fatal("Uncaught Exception:", error);
             gracefulShutdown("uncaughtException");
         });
+        
         process.on("unhandledRejection", (reason, promise) => {
             logger.error("Unhandled Rejection at:", promise, "reason:", reason);
         });
     }
 
     async cleanup() {
-        logger.info("Starting cleanup process...");
+        logger.info("Cleaning up resources...");
 
         try {
+            // Clear intervals
             if (this.storeWriteInterval) {
                 clearInterval(this.storeWriteInterval);
                 this.storeWriteInterval = null;
             }
 
-            if (this.worker) {
-                await this.worker.terminate();
-                this.worker = null;
-                logger.info("Worker terminated");
+            if (this.connectionRetryTimeout) {
+                clearTimeout(this.connectionRetryTimeout);
+                this.connectionRetryTimeout = null;
             }
 
-            // try {
-            //     unlink("./baileys_store.json");
-            //     logger.info("Deleted stored chat file");
-            // } catch (error) {
-            //     logger.error("Failed delete stored chat: ", error);
-            // }
+            // Terminate worker
+            await this.terminateWorker();
 
-            try {
-                store.writeToFile("./baileys_store.json");
-                logger.info("Last store saved successfully");
-            } catch (error) {
-                logger.error("Failed to save store:", error);
-            }
+            // Save store one last time
+            this.saveStore();
+            logger.info("Final store save completed");
 
+            // Close browser if used
             await closeBrowser();
-            logger.info("Cleanup completed");
+
+            // Close socket gracefully
+            if (this.sock) {
+                this.sock.end(undefined);
+                this.sock = null;
+            }
+
+            logger.info("Cleanup completed successfully");
         } catch (error) {
             logger.error("Error during cleanup:", error);
         }
@@ -138,12 +144,15 @@ class WhatsAppBot {
 
     async initializeSocket() {
         try {
+            // Fetch latest Baileys version
             const { error, version } = await fetchLatestBaileysVersion();
             if (error) {
                 logger.error("Error fetching Baileys version:", error);
                 throw error;
             }
+            logger.info(`Using Baileys version: ${version.join(".")}`);
 
+            // Initialize auth state from MySQL
             const { state, saveCreds } = await useMySQLAuthState({
                 session: process.env.MYSQL_SESSION || "session_1",
                 user: process.env.MYSQL_USER,
@@ -154,37 +163,50 @@ class WhatsAppBot {
                 tableName: process.env.MYSQL_TABLE || "auth",
             });
 
+            // Create WhatsApp socket
             this.sock = makeWASocket({
+                // History sync - disabled for performance
                 shouldSyncHistoryMessages: false,
                 syncFullHistory: false,
+                
+                // Authentication
                 auth: {
                     creds: state.creds,
                     keys: makeCacheableSignalKeyStore(state.keys, logger),
                 },
+                
+                // Version
                 version,
-                defaultQueryTimeoutMs:
-                    parseInt(process.env.QUERY_TIMEOUT) || 60000,
-                keepAliveIntervalMs: 30000,
-                cachedGroupMetadata: async (jid) => this.groupCache.get(jid),
+                
+                // Timeouts and intervals
+                defaultQueryTimeoutMs: this.config.queryTimeout,
+                keepAliveIntervalMs: this.config.keepAliveInterval,
+                
+                // Caching
+                cachedGroupMetadata: (jid) => this.groupCache.get(jid),
+                
+                // Message retrieval
                 getMessage: async (key) => {
                     try {
-                        const data = await store.loadMessage(
-                            key.remoteJid,
-                            key.id
-                        );
+                        const data = await store.loadMessage(key.remoteJid, key.id);
                         return data?.message || undefined;
                     } catch (error) {
-                        logger.warn(
-                            `Failed to get message ${key.id}:`,
-                            error.message
-                        );
+                        logger.debug(`Failed to retrieve message ${key.id}: ${error.message}`);
                         return undefined;
                     }
                 },
-                patchMessageBeforeSending: this.patchMessage.bind(this),
+                
+                // Message patching for buttons/lists
+                patchMessageBeforeSending: (message) => this.patchMessage(message),
+                
+                // Retry configuration
                 retryRequestDelayMs: 250,
                 maxMsgRetryCount: 3,
+                
+                // Browser info
                 browser: Browsers.windows("Desktop"),
+                
+                // Logger
                 logger,
             });
 
@@ -197,6 +219,7 @@ class WhatsAppBot {
     }
 
     patchMessage(message) {
+        // Patch messages that require special handling (buttons, templates, lists)
         const requiresPatch = !!(
             message.buttonsMessage ||
             message.templateMessage ||
@@ -221,110 +244,129 @@ class WhatsAppBot {
     }
 
     setupEventHandlers(saveCreds) {
+        // Bind store to socket events
         store.bind(this.sock.ev);
 
+        // Group metadata updates
         this.sock.ev.on("groups.update", async (events) => {
             for (const event of events) {
                 try {
                     const metadata = await this.sock.groupMetadata(event.id);
                     this.groupCache.set(event.id, metadata);
                 } catch (error) {
-                    logger.warn(
-                        `Failed to update group metadata for ${event.id}:`,
-                        error.message
-                    );
+                    logger.debug(`Failed to update group metadata for ${event.id}: ${error.message}`);
                 }
             }
         });
 
+        // Group participant updates
         this.sock.ev.on("group-participants.update", async (event) => {
             try {
                 const metadata = await this.sock.groupMetadata(event.id);
                 this.groupCache.set(event.id, metadata);
             } catch (error) {
-                logger.warn(
-                    `Failed to update group participants for ${event.id}:`,
-                    error.message
-                );
+                logger.debug(`Failed to update group participants for ${event.id}: ${error.message}`);
             }
         });
 
+        // Chats loaded
         this.sock.ev.on("chats.set", () => {
             logger.info(`Loaded ${store.chats.all().length} chats`);
         });
 
+        // Contacts loaded
         this.sock.ev.on("contacts.upsert", () => {
-            logger.info(
-                `Loaded ${Object.values(store.contacts).length} contacts`
-            );
+            logger.info(`Loaded ${Object.values(store.contacts).length} contacts`);
         });
 
-        this.sock.ev.on(
-            "connection.update",
-            this.handleConnectionUpdate.bind(this)
-        );
+        // Connection updates
+        this.sock.ev.on("connection.update", (update) => {
+            this.handleConnectionUpdate(update);
+        });
 
+        // Connection errors
         this.sock.ev.on("connection.error", (error) => {
             logger.error("Connection error:", error);
         });
 
+        // Incoming messages
         this.sock.ev.on("messages.upsert", async (m) => {
             try {
                 await WAEvents.MessageEventsHandler(m, this.sock);
             } catch (error) {
                 logger.error("Message handling error:", error);
-                Terminal.ErrorLog(error);
+                Terminal.ErrorLog?.(error);
             }
         });
 
-        this.sock.ev.on("message.update", (message) => {
-            logger.debug("Message updated:", message?.[0]?.key?.id);
+        // Message updates (edits, reactions, etc)
+        this.sock.ev.on("messages.update", (updates) => {
+            logger.debug(`Messages updated: ${updates.length}`);
         });
 
+        // Credentials update
         this.sock.ev.on("creds.update", saveCreds);
     }
 
     async handleConnectionUpdate(update) {
-        const { connection, lastDisconnect, qr } = update || {};
+        const { connection, lastDisconnect, qr } = update;
 
+        // Display QR code
         if (qr) {
-            try {
-                const qrString = await QRCode.toString(qr, {
-                    type: "terminal",
-                    small: true,
-                    scale: 1,
-                });
-                console.log(qrString);
-                logger.info("QR code displayed. Please scan with WhatsApp.");
-            } catch (error) {
-                logger.error("Failed to generate QR code:", error);
-            }
+            await this.displayQRCode(qr);
         }
 
-        if (connection === "open") {
-            await this.handleConnectionOpen();
-        } else if (connection === "close") {
-            await this.handleConnectionClose(lastDisconnect);
-        } else if (connection === "connecting") {
-            logger.info("Connecting to WhatsApp...");
+        // Handle connection state changes
+        switch (connection) {
+            case "open":
+                await this.handleConnectionOpen();
+                break;
+            case "close":
+                await this.handleConnectionClose(lastDisconnect);
+                break;
+            case "connecting":
+                logger.info("Connecting to WhatsApp...");
+                break;
+        }
+    }
+
+    async displayQRCode(qr) {
+        try {
+            const qrString = await QRCode.toString(qr, {
+                type: "terminal",
+                small: true,
+                scale: 1,
+            });
+            console.log(qrString);
+            logger.info("QR code displayed. Scan with WhatsApp to authenticate.");
+        } catch (error) {
+            logger.error("Failed to generate QR code:", error);
         }
     }
 
     async handleConnectionOpen() {
-        earthquake.active = true;
         this.reconnectAttempts = 0;
-        logger.info("Connection opened successfully!");
+        earthquake.active = true;
+        
+        logger.info("✓ Connected to WhatsApp successfully!");
 
+        // Initialize worker thread
         await this.initializeWorker();
 
+        // Send debug notification if configured
         if (Config?.debug && Config?.Owner) {
-            try {
-                await this.sock.sendMessage(`${Config.Owner}@s.whatsapp.net`, {
-                    text: `[DEBUG] Bot is online! Connected at ${new Date().toLocaleString()}`,
-                });
-            } catch (error) {
-                logger.warn("Failed to send debug message:", error.message);
-            }
+            await this.sendDebugNotification();
+        }
+    }
+
+    async sendDebugNotification() {
+        try {
+            const timestamp = new Date().toLocaleString();
+            await this.sock.sendMessage(`${Config.Owner}@s.whatsapp.net`, {
+                text: `[DEBUG] Bot is online! Connected at ${timestamp}`,
+            });
+        } catch (error) {
+            logger.debug(`Failed to send debug notification: ${error.message}`);
         }
     }
 
@@ -334,40 +376,17 @@ class WhatsAppBot {
         const statusCode = lastDisconnect?.error?.output?.statusCode;
         const errorMessage = lastDisconnect?.error?.message || "Unknown error";
 
-        logger.error(
-            `Connection closed. Status: ${statusCode}, Error: ${errorMessage}`
-        );
+        logger.warn(`Connection closed. Status: ${statusCode}, Error: ${errorMessage}`);
 
         earthquake.active = false;
         await this.terminateWorker();
 
         const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
-        if (
-            shouldReconnect &&
-            this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS
-        ) {
-            this.reconnectAttempts++;
-            logger.info(
-                `Attempting to reconnect... (${this.reconnectAttempts}/${this.MAX_RECONNECT_ATTEMPTS})`
-            );
-
-            setTimeout(async () => {
-                try {
-                    await this.start();
-                } catch (error) {
-                    logger.error("Reconnection failed:", error);
-                    const backoffDelay =
-                        this.RECONNECT_DELAY *
-                        Math.pow(2, this.reconnectAttempts - 1);
-                    setTimeout(
-                        () => this.start(),
-                        Math.min(backoffDelay, 30000)
-                    );
-                }
-            }, this.RECONNECT_DELAY);
-        } else if (this.reconnectAttempts >= this.MAX_RECONNECT_ATTEMPTS) {
-            logger.error("Max reconnection attempts reached. Stopping bot.");
+        if (shouldReconnect && this.reconnectAttempts < this.config.maxReconnectAttempts) {
+            await this.scheduleReconnect();
+        } else if (this.reconnectAttempts >= this.config.maxReconnectAttempts) {
+            logger.error("Maximum reconnection attempts reached. Shutting down.");
             await this.cleanup();
             process.exit(1);
         } else {
@@ -375,6 +394,29 @@ class WhatsAppBot {
             await this.cleanup();
             process.exit(0);
         }
+    }
+
+    async scheduleReconnect() {
+        this.reconnectAttempts++;
+        const backoffDelay = Math.min(
+            this.config.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1),
+            this.config.maxBackoffDelay
+        );
+
+        logger.info(
+            `Reconnecting in ${backoffDelay}ms... (Attempt ${this.reconnectAttempts}/${this.config.maxReconnectAttempts})`
+        );
+
+        this.connectionRetryTimeout = setTimeout(async () => {
+            try {
+                await this.start();
+            } catch (error) {
+                logger.error("Reconnection failed:", error);
+                if (this.reconnectAttempts < this.config.maxReconnectAttempts) {
+                    await this.scheduleReconnect();
+                }
+            }
+        }, backoffDelay);
     }
 
     async initializeWorker() {
@@ -395,11 +437,11 @@ class WhatsAppBot {
 
             this.worker.on("exit", (code) => {
                 if (code !== 0 && !this.isShuttingDown) {
-                    logger.warn(`Worker stopped with exit code ${code}`);
+                    logger.warn(`Worker exited with code ${code}`);
                 }
             });
 
-            logger.info("Worker initialized successfully");
+            logger.info("Worker thread initialized");
         } catch (error) {
             logger.error("Failed to initialize worker:", error);
         }
@@ -410,7 +452,7 @@ class WhatsAppBot {
             try {
                 await this.worker.terminate();
                 this.worker = null;
-                logger.info("Worker terminated successfully");
+                logger.info("Worker terminated");
             } catch (error) {
                 logger.error("Error terminating worker:", error);
             }
@@ -418,7 +460,10 @@ class WhatsAppBot {
     }
 
     async start() {
-        if (this.isShuttingDown) return;
+        if (this.isShuttingDown) {
+            logger.warn("Cannot start: shutdown in progress");
+            return;
+        }
 
         try {
             await LoadMenu();
@@ -433,6 +478,7 @@ class WhatsAppBot {
 
 async function main() {
     try {
+        // Display banner
         figlet("MeeI-Bot", (err, data) => {
             if (err) {
                 logger.error("Figlet error:", err);
@@ -441,14 +487,14 @@ async function main() {
             console.log(colors.FgGreen + data + colors.Reset);
         });
 
-        logger.info("Starting Bot...");
+        logger.info("Starting MeeI-Bot...");
 
         const bot = new WhatsAppBot();
         await bot.start();
     } catch (error) {
-        logger.error("Fatal error:", error);
+        logger.fatal("Fatal error:", error);
         process.exit(1);
     }
 }
 
-await main();
+main();
