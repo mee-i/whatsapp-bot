@@ -23,7 +23,7 @@ const RealtimeEarthquakeAPI = "https://bmkg-content-inatews.storage.googleapis.c
 //const EarthquakeAPI = "http://ancloud.my.id/gempa.json";
 
 const Gemini = {
-  model: "gemini-2.0-flash-lite-preview-02-05",
+  model: "gemini-flash-latest",
   apiKey: Bun.env.GEMINI_API_KEY,
 };
 
