@@ -22,6 +22,17 @@
     // Some stricter flags (disabled by default)
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noPropertyAccessFromIndexSignature": false
+    "noPropertyAccessFromIndexSignature": false,
+
+    "baseUrl": ".",
+    "paths": {
+      "@core/*": ["./core/*"],
+      "@modules/*": ["./modules/*"],
+      "@database/*": ["./database/*"],
+      "@db/*": ["./database/*"],
+      "@config/*": ["./config/*"],
+      "@utilities/*": ["./utilities/*"],
+      "@/*": ["./*"]
+    }
   }
 }

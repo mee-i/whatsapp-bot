@@ -4,7 +4,7 @@ import { colors } from "../utilities/colors.js";
 import { Config as ConfigFile } from "../utilities/database.js";
 import { Command } from "./commands.js";
 import { Config } from "../config.js";
-import { AutoFunction } from "../load-menu.ts";
+import { AutoFunction } from "@core/menu";
 import { hasPrefix, extractMessageText } from "./utils.js";
 
 /**
@@ -38,10 +38,11 @@ const processAutoFunctions = async (
     data: proto.IWebMessageInfo,
     text: string,
     isGroup: boolean,
-    sock: WASocket
+    sock: WASocket,
+    args: string[]
 ): Promise<void> => {
     const promises = Object.values(AutoFunction).map((fn) =>
-        fn({ sock, msg: data, text, isGroup })
+        fn({ sock, msg: data, text, isGroup, args })
     );
     await Promise.all(promises);
 };
@@ -76,7 +77,7 @@ export async function MessageEventsHandler(
             if (shouldSkipProcessing(data)) return;
 
             // Process auto functions
-            await processAutoFunctions(data, text, isGroup, sock);
+            await processAutoFunctions(data, text, isGroup, sock, [""]);
 
             // Check if text is valid
             if (typeof text !== "string") {

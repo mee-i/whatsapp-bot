@@ -1,11 +1,6 @@
 import { promises as fs } from "fs";
 import { resolve } from "path";
-import type {
-    WASocket,
-    proto,
-    BaileysEventMap,
-    BaileysEventEmitter,
-} from "baileys";
+import type { WASocket, proto, BaileysEventEmitter } from "baileys";
 import type { MemoryStore, StoreFileData } from "./types.js";
 
 /**

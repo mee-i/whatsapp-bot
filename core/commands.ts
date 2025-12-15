@@ -1,10 +1,10 @@
 import type { WASocket, proto } from "baileys";
 import { store } from "./memory-store.js";
 import { Config } from "../config.js";
-import { FunctionCommand, FunctionDetails, LoadMenu } from "../load-menu";
+import { FunctionCommand, FunctionDetails, LoadMenu } from "@core/menu";
 import { Config as ConfigFile } from "../utilities/database.js";
 import { db, userTable, commandLogTable, eq } from "../database/index.js";
-import * as xp from "../utilities/xp.js";
+import * as xp from "@utilities/xp";
 import {
     hasPrefix,
     getCommandWithoutPrefix,
@@ -121,6 +121,67 @@ const SYSTEM_COMMANDS: Record<string, SystemCommandHandler> = {
 };
 
 /**
+ * Check if user has required permissions
+ */
+const checkPermission = async (
+    permissions: string[],
+    data: proto.IWebMessageInfo,
+    sock: WASocket,
+    isGroup: boolean,
+    configOwner: string
+): Promise<boolean> => {
+    // If no permission required or includes 'all', allow
+    if (
+        !permissions ||
+        permissions.length === 0 ||
+        permissions.includes("all") ||
+        permissions.includes("global")
+    ) {
+        return true;
+    }
+
+    const jid = data.key?.remoteJid;
+    if (!jid) return false;
+
+    // Owner check
+    const ownerStatus = isOwner(data, isGroup, configOwner);
+    if (permissions.includes("owner")) {
+        if (ownerStatus) return true;
+    }
+
+    // Admin check (bot admin)
+    if (permissions.includes("admin")) {
+        if (ownerStatus) return true;
+    }
+
+    // Group checks
+    if (isGroup) {
+        // user_group_admin
+        if (permissions.includes("user_group_admin")) {
+            const isAdmin = await checkGroupAdmin(data, sock);
+            if (isAdmin) return true;
+        }
+
+        // self_group_admin
+        if (permissions.includes("self_group_admin")) {
+            const botId = sock.user?.id?.split(":")[0] + "@s.whatsapp.net";
+            const metadata = await store.fetchGroupMetadata(jid, sock);
+            const botParticipant = metadata?.participants.find(
+                (p: any) => p.id === botId
+            );
+            if (
+                botParticipant?.admin === "admin" ||
+                botParticipant?.admin === "superadmin"
+            ) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+};
+
+/**
  * Process and execute commands
  */
 export async function Command(
@@ -129,24 +190,19 @@ export async function Command(
     sock: WASocket,
     data: proto.IWebMessageInfo
 ): Promise<boolean> {
-    // Validate input types
     if (typeof command !== "string" || typeof isGroup !== "boolean") {
         throw new TypeError("Invalid parameter types");
     }
 
-    // Ignore own messages
     if (data.key?.fromMe) return false;
 
-    // Get command configuration
     const config = await ConfigFile.ReadConfig();
     const commandOptions = config["CommandOptions"];
 
-    // Check if message has command prefix
     if (!hasPrefix(command, commandOptions["COMMAND-PREFIXES"])) {
         return false;
     }
 
-    // Parse command and arguments
     const args = command.split(" ");
     const commandWithoutPrefix = getCommandWithoutPrefix(
         args[0],
@@ -157,7 +213,6 @@ export async function Command(
 
     const ownerStatus = isOwner(data, isGroup, Config.Owner);
 
-    // Check group-only commands
     if (
         commandOptions["GROUP-ONLY"].includes(commandWithoutPrefix) &&
         !isGroup
@@ -170,7 +225,6 @@ export async function Command(
         return false;
     }
 
-    // Check private-only commands
     if (
         commandOptions["PRIVATE-ONLY"].includes(commandWithoutPrefix) &&
         isGroup
@@ -183,77 +237,78 @@ export async function Command(
         return false;
     }
 
-    // Execute system commands (owner only)
     if (SYSTEM_COMMANDS[commandWithoutPrefix] && ownerStatus) {
         await SYSTEM_COMMANDS[commandWithoutPrefix](sock, jid);
         return true;
     }
-
-    // Check if bot is enabled
     if (!enableBot) return false;
 
-    // Check if command exists
     if (!FunctionCommand[commandWithoutPrefix]) return true;
 
     const funcDetails = FunctionDetails[commandWithoutPrefix];
-
-    // Check owner-only commands
-    if (funcDetails.owneronly && !ownerStatus) {
-        await sendMessage(sock, jid, "This command is only for bot owner!");
-        return false;
-    }
-
-    // Check admin-only commands
-    if (funcDetails.admingroup) {
-        if (!isGroup) {
-            await sendMessage(
-                sock,
-                jid,
-                "This command is only for group chat!"
-            );
-            return false;
-        }
-
-        const isAdmin = await checkGroupAdmin(data, sock);
-        if (!isAdmin) {
+    const permissions = funcDetails.permission || [];
+    const hasPerm = await checkPermission(
+        permissions,
+        data,
+        sock,
+        isGroup,
+        Config.Owner
+    );
+    if (!hasPerm) {
+        if (permissions.includes("owner") && !ownerStatus) {
+            await sendMessage(sock, jid, "This command is only for bot owner!");
+        } else if (permissions.includes("user_group_admin") && isGroup) {
             await sendMessage(
                 sock,
                 jid,
                 "This command is only for group admin!"
             );
-            return false;
+        } else if (permissions.includes("self_group_admin") && isGroup) {
+            await sendMessage(
+                sock,
+                jid,
+                "Bot must be admin to use this command!"
+            );
+        } else {
+            await sendMessage(
+                sock,
+                jid,
+                "You do not have permission to use this command."
+            );
         }
-    }
-
-    // Get command function and validate arguments
-    const func = FunctionCommand[commandWithoutPrefix];
-    const requiredArgs = func.length - 1;
-    args.shift(); // Remove command name
-
-    if (args.length < requiredArgs) {
-        await sendMessage(sock, jid, "Need more arguments!");
         return false;
     }
 
-    // Process arguments
+    const func = FunctionCommand[commandWithoutPrefix];
+    const requiredArgs = func.length - 1;
+    args.shift();
+
+    if (args.length < requiredArgs) {
+        const usage =
+            funcDetails.usage ||
+            `${commandOptions["COMMAND-PREFIXES"][0]}${commandWithoutPrefix}`;
+        await sendMessage(sock, jid, `Need more arguments! Usage: ${usage}`);
+        return false;
+    }
+
     const processedArgs =
         requiredArgs === 1 && args.length > 1 ? [args.join(" ")] : args;
     const userId = extractUserId(data, isGroup);
     if (!userId) return false;
-
-    // Validate user in database
     await validateUserInDatabase(userId, data.pushName || "Unknown", sock, jid);
     await xp.add({ remoteJid: userId, sock, msg: data });
 
-    // Execute command
     try {
         await logCommand(userId, commandWithoutPrefix, isGroup, processedArgs);
-        await func({ sock, msg: data, isGroup }, ...processedArgs);
+        await func(
+            { sock, msg: data, isGroup, args: processedArgs },
+            ...processedArgs
+        );
     } catch (error) {
         await sendMessage(
             sock,
             jid,
-            "Caught an error, please report to owner /bug <message>"
+            "Caught an error, auto report to owner ✅"
         );
         await sendMessage(
             sock,

@@ -4,8 +4,13 @@ import { db, authTable } from "./database/index.js";
 import { usePostgreSQLAuthState } from "./core/postgres-auth.js";
 import { MessageEventsHandler } from "./core/events.js";
 import { store } from "./core/memory-store.js";
-import { LoadMenu } from "./load-menu.ts";
+import { LoadMenu } from "@core/menu";
 import QRCode from "qrcode";
+import {
+    startEarthquakeWorker,
+    stopEarthquakeWorker,
+} from "./utilities/earthquake-handler.ts";
+import figlet from "figlet";
 
 async function startBot() {
     // Load all modules first
@@ -14,7 +19,7 @@ async function startBot() {
     console.log("✅ Modules loaded!");
 
     // Initialize PostgreSQL auth state
-    const { state, saveCreds } = await usePostgreSQLAuthState(
+    const { state, saveCreds, clearState } = await usePostgreSQLAuthState(
         db,
         authTable,
         "baileys"
@@ -22,23 +27,21 @@ async function startBot() {
 
     const sock = makeWASocket({
         auth: state, // Custom PostgreSQL auth state
-        logger: P({ level: "info" }), // Change to "debug" for debugging
+        logger: P({ level: "silent" }), // Change to "debug" for debugging
     });
 
-    // Bind memory store to socket events
     store.bind(sock.ev);
 
-    // Handle credentials update
     sock.ev.on("creds.update", saveCreds);
 
-    // Handle connection updates
     sock.ev.on("connection.update", async (update) => {
         const { connection, lastDisconnect, qr } = update;
 
         if (connection === "close") {
+            stopEarthquakeWorker();
             const shouldReconnect =
                 (lastDisconnect?.error as any)?.output?.statusCode !==
-                DisconnectReason.loggedOut;
+                DisconnectReason.connectionLost;
 
             console.log(
                 "Connection closed due to",
@@ -49,23 +52,36 @@ async function startBot() {
 
             if (shouldReconnect) {
                 startBot();
+            } else {
+                console.log(
+                    "❌ Device Logged Out (Device Removed). Clearing auth state and restarting..."
+                );
+                await clearState();
+                console.log("✅ Auth state cleared. Restarting bot...");
+                startBot();
             }
         } else if (connection === "open") {
             console.log("✅ Connected to WhatsApp!");
+
+            startEarthquakeWorker(sock);
         }
         if (qr) {
             console.log(await QRCode.toString(qr, { type: "terminal" }));
         }
     });
 
-    // Handle messages with core events handler
     sock.ev.on("messages.upsert", async (rawdata) => {
         if (rawdata.type === "notify") {
-            // Process new messages through core events handler
             await MessageEventsHandler(rawdata, sock);
         }
-        // Ignore old/already handled messages
     });
 }
 
+figlet("Miza Bot", (err, data) => {
+    if (err) {
+        console.error(err);
+        return;
+    }
+    console.log(data);
+});
 startBot();

@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import { resolve } from "path";
+import { db, userTable } from "../database/index.ts";
 
 /**
  * Configuration file structure
@@ -44,9 +45,9 @@ const Modify = async (key: string, value: any): Promise<void> => {
 /**
  * Read user data (legacy compatibility)
  */
-const ReadUserData = async (): Promise<Record<string, any>> => {
-    // This is a placeholder - should use database instead
-    return {};
+const ReadUserData = async () => {
+    const [userData] = await db.select().from(userTable);
+    return userData;
 };
 
 export const Config = {

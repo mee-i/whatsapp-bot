@@ -20,5 +20,5 @@ export const RealtimeEarthquakeAPI =
 
 export const Gemini = {
     model: "gemini-flash-latest",
-    apiKey: process.env.GEMINI_API_KEY,
+    apiKey: process.env.GEMINI_API_KEY!,
 };

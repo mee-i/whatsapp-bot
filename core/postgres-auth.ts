@@ -16,7 +16,11 @@ export async function usePostgreSQLAuthState(
     db: NodePgDatabase<any>,
     authTable: PgTableWithColumns<any>,
     sessionId: string = "baileys"
-): Promise<{ state: AuthenticationState; saveCreds: () => Promise<void> }> {
+): Promise<{
+    state: AuthenticationState;
+    saveCreds: () => Promise<void>;
+    clearState: () => Promise<void>;
+}> {
     // Write data to database
     const writeData = async (id: string, value: any): Promise<void> => {
         const data = JSON.stringify(value, BufferJSON.replacer);
@@ -118,6 +122,19 @@ export async function usePostgreSQLAuthState(
         },
         saveCreds: async () => {
             await writeData("creds", creds);
+        },
+        clearState: async () => {
+            try {
+                await db
+                    .delete(authTable)
+                    .where(eq(authTable.session, sessionId));
+                console.log(`Cleared auth state for session: ${sessionId}`);
+            } catch (error) {
+                console.error(
+                    `Failed to clear auth state for session: ${sessionId}`,
+                    error
+                );
+            }
         },
     };
 }
