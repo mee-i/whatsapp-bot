@@ -29,18 +29,18 @@ you can disable with
 ---
 
 ## TODO
-- [x] Make it easy to create command with function
-- [x] Automatically generate menu list
-- [x] Youtube, instagram, tiktok, any website, downloader
-- [x] AI Chat bot
-- [x] Earthquake Notification
-- [x] Implement SQL Auth
-- [x] Create a install script
-- [x] Create a new setup script
-- [x] Create auto download yt-dlp bin
+- [ ] Make it easy to create command with function
+- [ ] Automatically generate menu list
+- [ ] Youtube, instagram, tiktok, any website, downloader
+- [ ] AI Chat bot
+- [ ] Earthquake Notification
+- [x] Implement PostgreSQL Auth
+- [ ] Create a install script
+- [ ] Create a new setup script
+- [ ] Create auto download yt-dlp bin
 - [ ] Create a sticker author
 - [ ] RPG
-  - [x] Daily
+  - [ ] Daily
   - [ ] Store
     - [ ] Sell
     - [ ] Buy
