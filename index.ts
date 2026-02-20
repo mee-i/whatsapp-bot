@@ -1,4 +1,4 @@
-import makeWASocket, { DisconnectReason } from "baileys";
+import makeWASocket, { Browsers, DisconnectReason, getContentType } from "baileys";
 import P from "pino";
 import { db, authTable } from "./database/index.js";
 import { usePostgreSQLAuthState } from "./core/postgres-auth.js";
@@ -28,6 +28,9 @@ async function startBot() {
     const sock = makeWASocket({
         auth: state, // Custom PostgreSQL auth state
         logger: P({ level: "silent" }), // Change to "debug" for debugging
+        browser: Browsers.macOS("Desktop"),
+        syncFullHistory: false,
+        // shouldSyncHistoryMessage: () => false,
     });
 
     store.bind(sock.ev);

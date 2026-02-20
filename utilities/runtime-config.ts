@@ -12,10 +12,14 @@ interface ConfigData {
         "PRIVATE-ONLY": string[];
     };
     AntiLink: string[];
+    Typing: {
+        Simulate: boolean;
+        WritePerMinute: number;
+    };
     [key: string]: any;
 }
 
-const CONFIG_PATH = resolve("./config.json");
+const CONFIG_PATH = resolve("./runtime-config.json");
 
 /**
  * Read configuration from file
@@ -43,6 +47,15 @@ const Modify = async (key: string, value: any): Promise<void> => {
 };
 
 /**
+ * Modify typing configuration
+ */
+const ModifyTyping = async (typing: { Simulate?: boolean; WritePerMinute?: number }): Promise<void> => {
+    const data = await ReadConfig();
+    data.Typing = { ...data.Typing, ...typing };
+    await fs.writeFile(CONFIG_PATH, JSON.stringify(data, null, 2), "utf-8");
+};
+
+/**
  * Read user data (legacy compatibility)
  */
 const ReadUserData = async () => {
@@ -54,5 +67,6 @@ export const Config = {
     ReadConfig,
     IsAntiLinkEnabled,
     Modify,
+    ModifyTyping,
     ReadUserData,
 };

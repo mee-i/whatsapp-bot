@@ -1,13 +1,17 @@
-import { FunctionCommand } from "../load-menu.ts";
-import { defineCommand } from "@core/menu";
-import { Config as BotConfig } from "../config.ts";
-import { Config as ConfigFile } from "../utilities/database.ts";
+import { defineCommand, FunctionCommand } from "@core/menu";
+import { Config as BotConfig } from "@/config";
+import { Config as ConfigFile } from "@utils/runtime-config";
 
 /**
  * Display bot information
  */
 export const info = defineCommand(
-    async ({ sock, msg }) => {
+    {
+        usage: "${prefix}info",
+        menu: "Info",
+        info: "Display bot information",
+    },
+    async ({ sock, reply }) => {
         const groups = await sock.groupFetchAllParticipating();
         const groupCount = Object.keys(groups).length;
         const users = await ConfigFile.ReadUserData();
@@ -18,16 +22,7 @@ export const info = defineCommand(
 *Total Fitur: ${Object.keys(FunctionCommand).length}
 *Total User: ${userCount}
 `;
-        await sock.sendMessage(
-            msg.key?.remoteJid!,
-            { text: message },
-            { quoted: msg as any }
-        );
-    },
-    {
-        usage: "${prefix}info",
-        menu: "Info",
-        info: "Display bot information",
+        await reply(message);
     }
 );
 
@@ -35,21 +30,19 @@ export const info = defineCommand(
  * Say command using new structure
  */
 export const say = defineCommand(
-    async ({ sock, msg, args }) => {
-        if (!args[0]) {
-            await sock.sendMessage(msg.key?.remoteJid!, {
-                text: "Please provide text to say!",
-            });
-            return;
-        }
-        const text = args.join(" ");
-        await sock.sendMessage(msg.key?.remoteJid!, { text });
-    },
     {
         usage: "${prefix}say <text>",
         category: "General",
         info: "Saying the text that you want",
         permission: ["owner"],
+    },
+    async ({ send, args }) => {
+        if (!args[0]) {
+            await send("Please provide text to say!");
+            return;
+        }
+        const text = args.join(" ");
+        await send(text);
     }
 );
 
@@ -57,22 +50,20 @@ export const say = defineCommand(
  * Ping command to check bot response time
  */
 export const ping = defineCommand(
-    async ({ sock, msg }) => {
-        const startTime = Date.now();
-
-        await sock.sendMessage(msg.key?.remoteJid!, { text: "..." });
-
-        const endTime = Date.now();
-        const executionTime = endTime - startTime;
-        await sock.sendMessage(msg.key?.remoteJid!, {
-            text: `Pong ${executionTime} ms!`,
-        });
-    },
     {
         usage: "${prefix}ping",
         alias: ["pong"],
         menu: "Info",
         info: "Check bot response time",
+    },
+    async ({ send }) => {
+        const startTime = Date.now();
+
+        await send("...");
+
+        const endTime = Date.now();
+        const executionTime = endTime - startTime;
+        await send(`Pong ${executionTime} ms!`);
     }
 );
 
@@ -80,6 +71,11 @@ export const ping = defineCommand(
  * Display bot owner contact
  */
 export const owner = defineCommand(
+    {
+        usage: "${prefix}owner",
+        menu: "Info",
+        info: "Display bot owner contact",
+    },
     async ({ sock, msg }) => {
         const vcard =
             "BEGIN:VCARD\n" +
@@ -95,11 +91,6 @@ export const owner = defineCommand(
                 contacts: [{ vcard }],
             },
         });
-    },
-    {
-        usage: "${prefix}owner",
-        menu: "Info",
-        info: "Display bot owner contact",
     }
 );
 
@@ -107,16 +98,14 @@ export const owner = defineCommand(
  * Display total menu count
  */
 export const totalmenu = defineCommand(
-    async ({ sock, msg }) => {
-        const total = Object.keys(FunctionCommand).length;
-        await sock.sendMessage(msg.key?.remoteJid!, {
-            text: `Total fitur saat ini adalah ${total}`,
-        });
-    },
     {
         usage: "${prefix}totalmenu",
         menu: "Info",
         info: "Display total menu count",
+    },
+    async ({ send }) => {
+        const total = Object.keys(FunctionCommand).length;
+        await send(`Total fitur saat ini adalah ${total}`);
     }
 );
 
@@ -124,12 +113,15 @@ export const totalmenu = defineCommand(
  * Send bug report to owner
  */
 export const bug = defineCommand(
-    async ({ sock, msg, args }) => {
+    {
+        usage: "${prefix}bug <message>",
+        menu: "Info",
+        info: "Send bug report to owner",
+    },
+    async ({ sock, msg, send, reply, args }) => {
         const message = args.join(" ");
         if (!message) {
-            await sock.sendMessage(msg.key?.remoteJid!, {
-                text: "Silakan masukkan pesan bug yang ingin dilaporkan!",
-            });
+            await send("Silakan masukkan pesan bug yang ingin dilaporkan!");
             return;
         }
 
@@ -139,14 +131,7 @@ From: *${msg.pushName}*
 Jid: *${msg.key?.remoteJid}*
 Pesan: _${message}_`,
         });
-        await sock.sendMessage(msg.key?.remoteJid!, {
-            text: "Pesan telah dikirim kepada owner bot!",
-        });
-    },
-    {
-        usage: "${prefix}bug <message>",
-        menu: "Info",
-        info: "Send bug report to owner",
+        await reply("Pesan telah dikirim kepada owner bot!");
     }
 );
 
@@ -154,13 +139,13 @@ Pesan: _${message}_`,
  * Alias for bug command
  */
 export const report = defineCommand(
-    async (ctx, ...args) => {
-        return bug(ctx, ...args);
-    },
     {
         usage: "${prefix}report <message>",
         menu: "Info",
         info: "Alias for bug command",
         permission: ["all"],
+    },
+    async (ctx, ...args) => {
+        return bug(ctx, ...args);
     }
 );

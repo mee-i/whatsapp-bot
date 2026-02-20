@@ -15,5 +15,9 @@
       "notifgempa"
     ]
   },
-  "AntiLink": []
+  "AntiLink": [],
+  "Typing": {
+    "Simulate": true,
+    "WritePerMinute": 200
+  }
 }

@@ -1,4 +1,5 @@
 import { defineCommand } from "@core/menu";
+import { Config as ConfigFile } from "@utils/runtime-config";
 import si from "systeminformation";
 import os from "os";
 
@@ -21,10 +22,14 @@ const formatDuration = (seconds: number) => {
 };
 
 export const system = defineCommand(
-    async ({ sock, msg }) => {
-        await sock.sendMessage(msg.key?.remoteJid!, {
-            text: "Fetching system stats...",
-        });
+    {
+        usage: "${prefix}system",
+        menu: "Info",
+        info: "Display server system information",
+        permission: ["owner"], // Restricted to owner for safety
+    },
+    async ({ send }) => {
+        await send("Fetching system stats...");
 
         const [cpu, mem, osInfo, currentLoad] = await Promise.all([
             si.cpu(),
@@ -62,14 +67,40 @@ export const system = defineCommand(
 • ${formatDuration(uptime)}
 `;
 
-        await sock.sendMessage(msg.key?.remoteJid!, {
-            text: message,
-        });
-    },
+        await send(message);
+    }
+);
+
+export const setwpm = defineCommand(
     {
-        usage: "${prefix}system",
-        menu: "Info",
-        info: "Display server system information",
-        permission: ["owner"], // Restricted to owner for safety
+        usage: "${prefix}setwpm <number>",
+        menu: "System",
+        info: "Set writing speed (WPM)",
+        permission: ["owner"],
+    },
+    async ({ args, send }) => {
+        const wpm = parseInt(args[0]);
+        if (isNaN(wpm) || wpm <= 0) {
+            return await send("Please provide a valid WPM number (greater than 0)!");
+        }
+
+        await ConfigFile.ModifyTyping({ WritePerMinute: wpm });
+        await send(`Typing speed has been set to *${wpm} WPM*!`);
+    }
+);
+
+export const simulatetyping = defineCommand(
+    {
+        usage: "${prefix}simulatetyping",
+        menu: "System",
+        info: "Toggle simulate typing on/off",
+        permission: ["owner"],
+    },
+    async ({ send }) => {
+        const config = await ConfigFile.ReadConfig();
+        const newState = !config.Typing.Simulate;
+        
+        await ConfigFile.ModifyTyping({ Simulate: newState });
+        await send(`Simulate typing is now *${newState ? "ON" : "OFF"}*!`);
     }
 );

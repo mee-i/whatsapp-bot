@@ -32,6 +32,7 @@ function createMemoryStore(): MemoryStore {
         });
 
         ev.on("messaging-history.set", ({ chats: newChats }) => {
+            console.log("[message]: setting message history")
             for (const chat of newChats) {
                 chats.set(chat.id!, chat);
             }
@@ -48,9 +49,17 @@ function createMemoryStore(): MemoryStore {
                 const current = groupMetadata.get(update.id!);
                 groupMetadata.set(
                     update.id!,
-                    current ? { ...current, ...update } : update
+                    current ? { ...current, ...update } : update,
                 );
             }
+        });
+
+        ev.on("group-participants.update", (update) => {
+            const current = groupMetadata.get(update.id!);
+            groupMetadata.set(
+                update.id!,
+                current ? { ...current, ...update } : update,
+            );
         });
     };
 
@@ -58,7 +67,7 @@ function createMemoryStore(): MemoryStore {
      * Read store data from file (async)
      */
     const readFromFile = async (
-        file: string = resolve(__dirname, "../baileys_store.json")
+        file: string = resolve(__dirname, "../baileys_store.json"),
     ): Promise<void> => {
         try {
             const exists = await fs
@@ -104,7 +113,7 @@ function createMemoryStore(): MemoryStore {
      * Write store data to file (async)
      */
     const writeToFile = async (
-        file: string = resolve(__dirname, "../baileys_store.json")
+        file: string = resolve(__dirname, "../baileys_store.json"),
     ): Promise<void> => {
         try {
             const data: StoreFileData = {
@@ -113,7 +122,7 @@ function createMemoryStore(): MemoryStore {
                     [...messages.entries()].map(([jid, msgs]) => [
                         jid,
                         [...msgs.entries()],
-                    ])
+                    ]),
                 ),
                 contacts,
                 groupMetadata: [...groupMetadata.entries()],
@@ -130,7 +139,7 @@ function createMemoryStore(): MemoryStore {
      */
     const loadMessage = async (
         jid: string,
-        id: string
+        id: string,
     ): Promise<proto.IWebMessageInfo | undefined> => {
         const msgs = messages.get(jid);
         return msgs?.get(id);
@@ -141,7 +150,7 @@ function createMemoryStore(): MemoryStore {
      */
     const fetchGroupMetadata = async (
         jid: string,
-        sock: WASocket
+        sock: WASocket,
     ): Promise<any> => {
         try {
             // Return cached if available
@@ -156,7 +165,7 @@ function createMemoryStore(): MemoryStore {
         } catch (err) {
             console.error(
                 "Failed to fetch group metadata:",
-                (err as Error).message
+                (err as Error).message,
             );
             return null;
         }

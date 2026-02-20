@@ -32,6 +32,7 @@
       "@db/*": ["./database/*"],
       "@config/*": ["./config/*"],
       "@utilities/*": ["./utilities/*"],
+      "@utils/*": ["./utilities/*"],
       "@/*": ["./*"]
     }
   }

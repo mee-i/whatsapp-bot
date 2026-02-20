@@ -1,9 +1,9 @@
 import type { WASocket, proto } from "baileys";
-import { store } from "./memory-store.js";
-import { Config } from "../config.js";
+import { store } from "@core/memory-store";
+import { Config } from "@/config";
 import { FunctionCommand, FunctionDetails, LoadMenu } from "@core/menu";
-import { Config as ConfigFile } from "../utilities/database.js";
-import { db, userTable, commandLogTable, eq } from "../database/index.js";
+import { Config as ConfigFile } from "@utils/runtime-config";
+import { db, userTable, commandLogTable, eq } from "@database/index.js";
 import * as xp from "@utilities/xp";
 import {
     hasPrefix,
@@ -11,16 +11,10 @@ import {
     sendMessage,
     extractUserId,
     isOwner,
-} from "./utils.js";
-
-/**
- * Command context passed to command handlers
- */
-interface CommandContext {
-    sock: WASocket;
-    msg: proto.IWebMessageInfo;
-    isGroup: boolean;
-}
+    createMessagingHelpers,
+    downloadMedia,
+    getContentType,
+} from "@core/utils";
 
 /**
  * System command handler type
@@ -198,6 +192,7 @@ export async function Command(
 
     const config = await ConfigFile.ReadConfig();
     const commandOptions = config["CommandOptions"];
+    const typingConfig = config["Typing"];
 
     if (!hasPrefix(command, commandOptions["COMMAND-PREFIXES"])) {
         return false;
@@ -298,26 +293,70 @@ export async function Command(
     await validateUserInDatabase(userId, data.pushName || "Unknown", sock, jid);
     await xp.add({ remoteJid: userId, sock, msg: data });
 
+    const { reply, send } = createMessagingHelpers(
+        sock,
+        jid,
+        data,
+        typingConfig
+    );
+
+    let mediaPath: string | undefined;
+    if (funcDetails.requireImage || funcDetails.requireVideo) {
+        const messageType = getContentType(data.message as any);
+        const isImage = messageType === "imageMessage";
+        const isVideo = messageType === "videoMessage";
+
+        if (funcDetails.requireImage && !isImage) {
+            await reply("This command requires an image! Please send an image with the command.");
+            return false;
+        }
+
+        if (funcDetails.requireVideo && !isVideo) {
+            await reply("This command requires a video! Please send a video with the command.");
+            return false;
+        }
+
+        mediaPath = (await downloadMedia(data, sock)) || undefined;
+        if (!mediaPath) {
+            await reply("Failed to download media. Please try again.");
+            return false;
+        }
+    }
+
     try {
         await logCommand(userId, commandWithoutPrefix, isGroup, processedArgs);
-        await func(
-            { sock, msg: data, isGroup, args: processedArgs },
+        const result = await func(
+            {
+                sock,
+                msg: data,
+                isGroup,
+                args: processedArgs,
+                reply,
+                send,
+                mediaPath,
+            },
             ...processedArgs
         );
+
+        if (result) {
+            await reply(result);
+        }
     } catch (error) {
         await sendMessage(
             sock,
             jid,
-            "Caught an error, auto report to owner ✅"
+            "Caught an error, auto report to owner ✅",
+            typingConfig
         );
         await sendMessage(
             sock,
-            `${Config.Owner}@s.whatsapp.net`,
+            `${Config.Owner}@lid`,
             `[ERROR REPORT]\nCommand: *${
                 commandOptions["COMMAND-PREFIXES"][0]
             }${commandWithoutPrefix}*\nError: _${
                 (error as Error).message
-            }_\nStack Trace: _${(error as Error).stack}_`
+            }_\nStack Trace: _${(error as Error).stack}_`,
+            typingConfig
         );
     }
 

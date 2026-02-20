@@ -3,6 +3,18 @@ import { resolve, extname } from "path";
 import type { WASocket, proto } from "baileys";
 
 /**
+ * Media sending options
+ */
+export interface MediaOptions {
+    media: string | Buffer;
+    caption?: string;
+    gif?: boolean;
+    viewOnce?: boolean;
+    asFile?: boolean;
+    asDocument?: boolean; // Alias for asFile
+}
+
+/**
  * Command context passed to handlers
  */
 export interface CommandContext {
@@ -10,6 +22,9 @@ export interface CommandContext {
     msg: proto.IWebMessageInfo;
     isGroup: boolean;
     args: string[];
+    reply: (content: string | MediaOptions) => Promise<void>;
+    send: (content: string | MediaOptions) => Promise<void>;
+    mediaPath?: string;
 }
 
 /**
@@ -26,7 +41,7 @@ export type PermissionType =
  * Command handler function type
  */
 export interface CommandHandler {
-    (ctx: CommandContext, ...args: string[]): Promise<void>;
+    (ctx: CommandContext, ...args: string[]): Promise<void | string | MediaOptions>;
     usage?: string;
     category?: string;
     menu?: string;
@@ -37,6 +52,8 @@ export interface CommandHandler {
     admingroup?: boolean;
     description?: string;
     alias?: string[];
+    requireImage?: boolean;
+    requireVideo?: boolean;
 }
 
 /**
@@ -56,6 +73,8 @@ export interface FunctionDetail {
     usage?: string;
     source?: string;
     isAlias?: boolean;
+    requireImage?: boolean;
+    requireVideo?: boolean;
 }
 
 /**
@@ -92,14 +111,16 @@ export interface CommandMetadata {
     owneronly?: boolean;
     admingroup?: boolean;
     alias?: string[];
+    requireImage?: boolean;
+    requireVideo?: boolean;
 }
 
 /**
  * Define a command with metadata
  */
 export function defineCommand(
-    handler: (ctx: CommandContext, ...args: string[]) => Promise<void>,
-    metadata?: CommandMetadata
+    metadata: CommandMetadata,
+    handler: (ctx: CommandContext, ...args: string[]) => Promise<void>
 ): CommandHandler {
     const command = handler as CommandHandler;
     if (metadata) {
@@ -248,6 +269,8 @@ async function loadModule(filePath: string, fileName: string): Promise<void> {
                     description,
                     menu,
                     usage,
+                    requireImage: command.requireImage,
+                    requireVideo: command.requireVideo,
                 };
 
                 // Register main command

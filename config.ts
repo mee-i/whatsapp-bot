@@ -1,9 +1,9 @@
 export const Config = {
     BotName: "MeeI Bot",
-    Owner: "6281220533069",
-    Admin: ["6281220533069"],
+    Owner: "26362542833890", // must use lid not number
+    Admin: [""], // must use lid not number
     AIMessage: [] as string[],
-    CurrentNumber: "6281220533069",
+    CurrentNumber: "", // must use lid not number
     debug: true,
 
     ReadMessage: true,

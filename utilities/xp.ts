@@ -36,7 +36,7 @@ export async function add({
         const initialLevel = currentLevel;
         const newLevel = currentLevel + 1;
 
-        await sock.sendMessage(msg.key.remoteJid!, {
+        await sock.sendMessage(msg.key?.remoteJid!, {
             text: `*LEVEL UP*
 Hey @${userdata.name}, Level anda bertambah!
 *${initialLevel}* > *${newLevel}*

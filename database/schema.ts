@@ -46,6 +46,7 @@ export const userTable = pgTable("user", {
     last_work: timestamp("last_work"),
     last_fishing: timestamp("last_fishing"),
     last_farming: timestamp("last_farming"),
+    daily_streak: integer("daily_streak").notNull().default(0),
 });
 
 export const storeTable = pgTable("store", {
@@ -69,7 +70,12 @@ export const itemsTable = pgTable("items", {
     rarity: varchar("rarity", { length: 20 }).notNull().default("common"),
     stats: text("stats"),
     sellable: boolean("sellable").notNull().default(true),
-    chance: real("chance").notNull().default(0.1), 
+    chance: real("chance").notNull().default(0.1),
+    // Farming fields (seeds only)
+    grow_time: integer("grow_time"), // minutes to grow
+    min_yield: integer("min_yield"), // min crops per harvest
+    max_yield: integer("max_yield"), // max crops per harvest
+    harvest_item_id: varchar("harvest_item_id", { length: 100 }), // item produced on harvest
 });
 
 export const userInventoryTable = pgTable(
@@ -87,6 +93,23 @@ export const userInventoryTable = pgTable(
     })
 );
 
+
+// Farm plot system
+export const userFarmPlotTable = pgTable(
+    "user_farm_plot",
+    {
+        id: varchar("id", { length: 100 }).notNull().primaryKey(),
+        user_id: varchar("user_id", { length: 100 }).notNull(),
+        slot: integer("slot").notNull(),
+        seed_id: varchar("seed_id", { length: 100 }),
+        planted_at: timestamp("planted_at"),
+        is_watered: boolean("is_watered").notNull().default(false),
+    },
+    (plot) => ({
+        idx_user_plot: index("idx_user_plot").on(plot.user_id),
+        unique_user_slot: unique("unique_user_slot").on(plot.user_id, plot.slot),
+    })
+);
 
 // Bank system for secure money storage
 export const userBankTable = pgTable("user_bank", {
