@@ -54,14 +54,22 @@ export interface CommandHandler {
     alias?: string[];
     requireImage?: boolean;
     requireVideo?: boolean;
+    groupOnly?: boolean;
+    privateOnly?: boolean;
+    adminGroup?: boolean;
+    requireBotAdmin?: boolean;
 }
 
 /**
  * Auto function handler type (for files starting with _)
  */
-export type AutoFunctionHandler = (
-    ctx: CommandContext & { text: string }
-) => Promise<void>;
+export interface AutoFunctionHandler {
+    (ctx: CommandContext & { text: string }): Promise<void>;
+    groupOnly?: boolean;
+    privateOnly?: boolean;
+    adminGroup?: boolean;
+    requireBotAdmin?: boolean;
+}
 
 /**
  * Function details metadata
@@ -75,6 +83,10 @@ export interface FunctionDetail {
     isAlias?: boolean;
     requireImage?: boolean;
     requireVideo?: boolean;
+    groupOnly?: boolean;
+    privateOnly?: boolean;
+    adminGroup?: boolean;
+    requireBotAdmin?: boolean;
 }
 
 /**
@@ -113,6 +125,20 @@ export interface CommandMetadata {
     alias?: string[];
     requireImage?: boolean;
     requireVideo?: boolean;
+    groupOnly?: boolean;
+    privateOnly?: boolean;
+    adminGroup?: boolean;
+    requireBotAdmin?: boolean;
+}
+
+/**
+ * Auto function metadata interface
+ */
+export interface AutoFunctionMetadata {
+    groupOnly?: boolean;
+    privateOnly?: boolean;
+    adminGroup?: boolean;
+    requireBotAdmin?: boolean;
 }
 
 /**
@@ -133,9 +159,14 @@ export function defineCommand(
  * Define an auto function
  */
 export function defineAutoFunction(
+    metadata: AutoFunctionMetadata,
     handler: AutoFunctionHandler
 ): AutoFunctionHandler {
-    return handler;
+    const fn = handler as any;
+    if (metadata) {
+        Object.assign(fn, metadata);
+    }
+    return fn;
 }
 
 /**
@@ -243,8 +274,12 @@ async function loadModule(filePath: string, fileName: string): Promise<void> {
                 // Legacy config support
                 if (configDetail?.owneronly || command.owneronly)
                     permissions.push("owner");
-                if (configDetail?.admingroup || command.admingroup)
+                if (configDetail?.admingroup || command.admingroup || command.adminGroup)
                     permissions.push("admin");
+                if (command.requireBotAdmin)
+                    permissions.push("self_group_admin");
+                if (command.adminGroup)
+                    permissions.push("user_group_admin");
 
                 // Deduplicate and default to 'all' if empty
                 permissions = [...new Set(permissions)];
@@ -271,6 +306,10 @@ async function loadModule(filePath: string, fileName: string): Promise<void> {
                     usage,
                     requireImage: command.requireImage,
                     requireVideo: command.requireVideo,
+                    groupOnly: command.groupOnly,
+                    privateOnly: command.privateOnly,
+                    adminGroup: command.adminGroup,
+                    requireBotAdmin: command.requireBotAdmin,
                 };
 
                 // Register main command

@@ -33,7 +33,7 @@ async function startBot() {
         // shouldSyncHistoryMessage: () => false,
     });
 
-    store.bind(sock.ev);
+    store.bind(sock);
 
     sock.ev.on("creds.update", saveCreds);
 

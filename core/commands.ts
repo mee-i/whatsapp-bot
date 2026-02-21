@@ -14,6 +14,7 @@ import {
     createMessagingHelpers,
     downloadMedia,
     getContentType,
+    checkGroupAdmin,
 } from "@core/utils";
 
 /**
@@ -53,26 +54,6 @@ const validateUserInDatabase = async (
     }
 };
 
-/**
- * Check if user is group admin
- */
-const checkGroupAdmin = async (
-    data: proto.IWebMessageInfo,
-    sock: WASocket
-): Promise<boolean> => {
-    const jid = data.key?.remoteJid;
-    if (!jid) return false;
-
-    const metadata = await store.fetchGroupMetadata(jid, sock);
-    if (!metadata) return false;
-
-    const participant = metadata.participants.find(
-        (p: any) => p.id === data.key?.participant
-    );
-    return (
-        participant?.admin === "superadmin" || participant?.admin === "admin"
-    );
-};
 
 /**
  * Log command execution to database
@@ -92,9 +73,9 @@ const logCommand = async (
 };
 
 /**
- * Bot enable state (TODO: move to database)
+ * Bot enable state
  */
-let enableBot = false;
+let enableBot = process.env.ENABLE_BOT === "true" ? true : false;
 
 /**
  * System commands (owner only)
@@ -124,52 +105,51 @@ const checkPermission = async (
     isGroup: boolean,
     configOwner: string
 ): Promise<boolean> => {
-    // If no permission required or includes 'all', allow
-    if (
-        !permissions ||
-        permissions.length === 0 ||
-        permissions.includes("all") ||
-        permissions.includes("global")
-    ) {
-        return true;
-    }
-
     const jid = data.key?.remoteJid;
     if (!jid) return false;
 
-    // Owner check
     const ownerStatus = isOwner(data, isGroup, configOwner);
-    if (permissions.includes("owner")) {
-        if (ownerStatus) return true;
+
+    // MANDATORY CHECKS: Metadata flags must be met regardless of other permissions
+    // Note: These were added to permissions array in menu.ts for simplified handling,
+    // but here we treat some as mandatory for the bot or user.
+    
+    // 1. Bot Admin Check (Mandatory if required)
+    if (permissions.includes("self_group_admin")) {
+        console.log("user", JSON.stringify(sock.user, null, 2))
+        const botId = sock.user?.lid?.split(":")[0] + "@lid";
+        const metadata = await store.fetchGroupMetadata(jid, sock);
+        console.log("metadata", JSON.stringify(metadata, null, 2))
+        const botParticipant = metadata?.participants.find((p: any) => p.id === botId);
+        const botIsAdmin = botParticipant?.admin === "admin" || botParticipant?.admin === "superadmin";
+        if (!botIsAdmin) return false;
     }
 
-    // Admin check (bot admin)
-    if (permissions.includes("admin")) {
-        if (ownerStatus) return true;
+    // Owner bypass (Moved after bot admin check)
+    if (ownerStatus) return true;
+
+    // 2. User Group Admin Check (Mandatory if adminGroup is true)
+    if (permissions.includes("user_group_admin")) {
+        const isAdmin = await checkGroupAdmin(data, sock);
+        if (!isAdmin) return false;
     }
 
-    // Group checks
-    if (isGroup) {
-        // user_group_admin
-        if (permissions.includes("user_group_admin")) {
-            const isAdmin = await checkGroupAdmin(data, sock);
-            if (isAdmin) return true;
-        }
+    // 3. General Permission Level Check (OR logic)
+    // If we passed mandatory flags, check if we have any other required permission
+    
+    // Filter out the mandatory flags to check actual user permissions
+    const userPerms = permissions.filter(p => p !== "self_group_admin" && p !== "user_group_admin");
 
-        // self_group_admin
-        if (permissions.includes("self_group_admin")) {
-            const botId = sock.user?.id?.split(":")[0] + "@s.whatsapp.net";
-            const metadata = await store.fetchGroupMetadata(jid, sock);
-            const botParticipant = metadata?.participants.find(
-                (p: any) => p.id === botId
-            );
-            if (
-                botParticipant?.admin === "admin" ||
-                botParticipant?.admin === "superadmin"
-            ) {
-                return true;
-            }
-        }
+    // If no specific user permissions left, and we passed mandatory ones, allow
+    if (userPerms.length === 0 || userPerms.includes("all") || userPerms.includes("global")) {
+        return true;
+    }
+
+    // Otherwise, user must match one of the remaining (owner, admin, etc.)
+    if (userPerms.includes("owner") && ownerStatus) return true;
+    if (userPerms.includes("admin")) {
+        const isAdmin = await checkGroupAdmin(data, sock);
+        if (isAdmin) return true;
     }
 
     return false;
@@ -241,6 +221,25 @@ export async function Command(
     if (!FunctionCommand[commandWithoutPrefix]) return true;
 
     const funcDetails = FunctionDetails[commandWithoutPrefix];
+
+    if (funcDetails.groupOnly && !isGroup) {
+        await sendMessage(
+            sock,
+            jid,
+            "Sorry this command is only for group chat!"
+        );
+        return false;
+    }
+
+    if (funcDetails.privateOnly && isGroup) {
+        await sendMessage(
+            sock,
+            jid,
+            "Sorry this command is only for private chat!"
+        );
+        return false;
+    }
+
     const permissions = funcDetails.permission || [];
     const hasPerm = await checkPermission(
         permissions,
@@ -252,7 +251,7 @@ export async function Command(
     if (!hasPerm) {
         if (permissions.includes("owner") && !ownerStatus) {
             await sendMessage(sock, jid, "This command is only for bot owner!");
-        } else if (permissions.includes("user_group_admin") && isGroup) {
+        } else if (permissions.includes("user_group_admin") && isGroup && !ownerStatus) {
             await sendMessage(
                 sock,
                 jid,

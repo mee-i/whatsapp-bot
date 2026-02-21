@@ -228,3 +228,27 @@ export const downloadMedia = async (
         return null;
     }
 };
+
+/**
+ * Check if user is group admin
+ */
+export const checkGroupAdmin = async (
+    data: proto.IWebMessageInfo,
+    sock: WASocket
+): Promise<boolean> => {
+    const jid = data.key?.remoteJid;
+    if (!jid) return false;
+
+    const { store } = require("@core/memory-store");
+    const metadata = await store.fetchGroupMetadata(jid, sock);
+    if (!metadata) return false;
+
+    console.log(JSON.stringify(metadata, null, 2));
+
+    const participant = metadata.participants.find(
+        (p: any) => p.id === (data.key?.participant || data.key?.remoteJid)
+    );
+    return (
+        participant?.admin === "superadmin" || participant?.admin === "admin"
+    );
+};

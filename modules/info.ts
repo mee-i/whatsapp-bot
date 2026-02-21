@@ -125,7 +125,7 @@ export const bug = defineCommand(
             return;
         }
 
-        await sock.sendMessage(`${BotConfig.Owner}@s.whatsapp.net`, {
+        await sock.sendMessage(`${BotConfig.Owner}@lid`, {
             text: `[BUG REPORT]
 From: *${msg.pushName}*
 Jid: *${msg.key?.remoteJid}*
@@ -146,6 +146,6 @@ export const report = defineCommand(
         permission: ["all"],
     },
     async (ctx, ...args) => {
-        return bug(ctx, ...args);
+        bug(ctx, ...args);
     }
 );

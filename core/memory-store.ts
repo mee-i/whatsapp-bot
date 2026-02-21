@@ -16,7 +16,8 @@ function createMemoryStore(): MemoryStore {
     /**
      * Bind event listeners to update store
      */
-    const bind = (ev: BaileysEventEmitter): void => {
+    const bind = (sock: WASocket): void => {
+        const ev = sock.ev;
         ev.on("messages.upsert", ({ messages: newMessages }) => {
             for (const msg of newMessages) {
                 const jid = msg.key.remoteJid;
@@ -32,7 +33,7 @@ function createMemoryStore(): MemoryStore {
         });
 
         ev.on("messaging-history.set", ({ chats: newChats }) => {
-            console.log("[message]: setting message history")
+            console.log("[message]: setting message history");
             for (const chat of newChats) {
                 chats.set(chat.id!, chat);
             }
@@ -44,22 +45,22 @@ function createMemoryStore(): MemoryStore {
             }
         });
 
-        ev.on("groups.update", (updates) => {
+        ev.on("groups.update", async (updates) => {
+            console.log("[GROUP]: updating group metadata\n");
             for (const update of updates) {
-                const current = groupMetadata.get(update.id!);
-                groupMetadata.set(
-                    update.id!,
-                    current ? { ...current, ...update } : update,
-                );
+                if (update.id) {
+                    const metadata = await fetchGroupMetadata(update.id, sock);
+                    groupMetadata.set(update.id, metadata);
+                }
             }
         });
 
-        ev.on("group-participants.update", (update) => {
-            const current = groupMetadata.get(update.id!);
-            groupMetadata.set(
-                update.id!,
-                current ? { ...current, ...update } : update,
-            );
+        ev.on("group-participants.update", async (update) => {
+            if (update.id) {
+                console.log("[GROUP]: updating participants\n");
+                const metadata = await fetchGroupMetadata(update.id, sock);
+                groupMetadata.set(update.id, metadata);
+            }
         });
     };
 

@@ -171,7 +171,7 @@ export const handler = async (data: EarthquakeData, sock: WASocket) => {
                     true
                 );
                 if (Config.Owner) {
-                    await sock.sendMessage(`${Config.Owner}@s.whatsapp.net`, {
+                    await sock.sendMessage(`${Config.Owner}@lid`, {
                         text: debugMessage,
                     });
                 }
@@ -221,7 +221,7 @@ export const handler = async (data: EarthquakeData, sock: WASocket) => {
         // Optionally bisa kirim error message ke admin
         if (Config?.debug && Config?.Owner) {
             try {
-                await sock.sendMessage(`${Config.Owner}@s.whatsapp.net`, {
+                await sock.sendMessage(`${Config.Owner}@lid`, {
                     text: `🚨 *Earthquake Handler Error*\n\nEvent ID: ${eventId}\nError: ${
                         (error as Error).message
                     }\n\nStack: ${(error as Error).stack?.substring(

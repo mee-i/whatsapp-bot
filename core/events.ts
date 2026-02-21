@@ -3,9 +3,10 @@ import { terminal } from "@utils/terminal.js";
 import { colors } from "@utils/colors.js";
 import { Config as ConfigFile } from "@utils/runtime-config";
 import { Command } from "@core/commands";
+import { store } from "@core/memory-store";
 import { Config } from "@/config";
 import { AutoFunction, type MediaOptions } from "@core/menu";
-import { hasPrefix, extractMessageText, createMessagingHelpers } from "@core/utils";
+import { hasPrefix, extractMessageText, createMessagingHelpers, checkGroupAdmin } from "@core/utils";
 
 /**
  * Create logger for messages
@@ -42,9 +43,33 @@ const processAutoFunctions = async (
     args: string[],
     helpers: { reply: (content: string | MediaOptions) => Promise<void>; send: (content: string | MediaOptions) => Promise<void> }
 ): Promise<void> => {
-    const promises = Object.values(AutoFunction).map((fn) =>
-        fn({ sock, msg: data, text, isGroup, args, ...helpers })
-    );
+    const promises = Object.values(AutoFunction).map(async (fn) => {
+        // Owner bypass
+        const ownerStatus = text && Config.Owner && (data.key?.participant || data.key?.remoteJid)?.includes(Config.Owner);
+        
+        if (fn.groupOnly && !isGroup) return;
+        if (fn.privateOnly && isGroup) return;
+
+        // If it's a group and flags are set, check them
+        if (isGroup) {
+            if (fn.adminGroup && !ownerStatus) {
+                const isAdmin = await checkGroupAdmin(data, sock);
+                if (!isAdmin) return;
+            }
+
+            if (fn.requireBotAdmin) {
+                const jid = data.key?.remoteJid;
+                if (!jid) return;
+                const botId = sock.user?.id?.split(":")[0] + "@lid";
+                const metadata = await store.fetchGroupMetadata(jid, sock);
+                const botParticipant = metadata?.participants.find((p: any) => p.id === botId);
+                const botIsAdmin = botParticipant?.admin === "admin" || botParticipant?.admin === "superadmin";
+                if (!botIsAdmin) return;
+            }
+        }
+
+        return fn({ sock, msg: data, text, isGroup, args, ...helpers });
+    });
     await Promise.all(promises);
 };
 

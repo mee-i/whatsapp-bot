@@ -24,7 +24,7 @@ export interface StoreFileData {
  * Memory store instance interface
  */
 export interface MemoryStore extends BaileysStore {
-    bind: (ev: BaileysEventEmitter) => void;
+    bind: (sock: WASocket) => void;
     readFromFile: (file?: string) => Promise<void>;
     writeToFile: (file?: string) => Promise<void>;
     loadMessage: (
