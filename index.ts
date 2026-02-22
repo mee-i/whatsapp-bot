@@ -10,6 +10,7 @@ import {
     startEarthquakeWorker,
     stopEarthquakeWorker,
 } from "./utilities/earthquake-handler.ts";
+import { startWebhookServer } from "./utilities/webhook-server.ts";
 import figlet from "figlet";
 
 async function startBot() {
@@ -67,6 +68,9 @@ async function startBot() {
             console.log("✅ Connected to WhatsApp!");
 
             startEarthquakeWorker(sock);
+            startWebhookServer(sock).then(() => {
+                console.log("🌐 Webhook server is running!");
+            });
         }
         if (qr) {
             console.log(await QRCode.toString(qr, { type: "terminal" }));

@@ -194,3 +194,12 @@ export const commandLogTable = pgTable("command_log", {
         .defaultNow(),
     isGroup: boolean("isGroup").notNull().default(false),
 });
+
+export const webhookTable = pgTable("webhooks", {
+    id: varchar("id", { length: 100 }).notNull().primaryKey(),
+    name: varchar("name", { length: 100 }).notNull(),
+    owner_id: varchar("owner_id", { length: 100 }).notNull(),
+    group_id: varchar("group_id", { length: 100 }).notNull(),
+    secret_key: varchar("secret_key", { length: 100 }).notNull(),
+    created_at: timestamp("created_at").defaultNow().notNull(),
+});
