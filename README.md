@@ -4,86 +4,77 @@
 
 # MeeI WhatsApp Bot
 
-## A simple and customizable WhatsApp bot built using the [`@WhiskeySockets/Baileys`](https://github.com/WhiskeySockets/baileys) library. This bot allows you to automate responses, create commands, and interact with WhatsApp users programmatically.
+## A powerful and highly customizable WhatsApp bot built using Bun and the [`baileys`](https://github.com/WhiskeySockets/baileys) library.
 
 ## Features
 
--   Send automated replies.
--   Any website video/audio downloader https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md
--   Command-based interaction (e.g., `/say Hello World!` responds with `Hello World!`)
--   Ai Chat Bot (Gemini)
--   Eathquake Notification (Using bmkg api)
+-   **Sticker & Media**: Convert images and videos to stickers with custom metadata (Pack name & Author).
+-   **Meme Generation**: Create hilarious memes and meme stickers on the fly with `.meme` and `.smeme`.
+-   **Multi-Platform Downloader**: Support for YouTube, Instagram, TikTok, and more via `yt-dlp`.
+-   **AI Chat (Gemini)**: Integration with Google's Gemini Pro for smart interactions.
+-   **Real-time Earthquake Notifications**: Stay informed with live updates from BMKG.
+-   **PostgreSQL Support**: Reliable session management and data storage.
+-   **Command System**: Easily extendable command architecture with permission guards.
 
 ---
 
-## How to use Bot
+## Getting Started
 
-### Enable the bot
+### Prerequisites
 
-First you need change the owner in config.js
-then chat to bot or group that the bot joined
+-   [Bun](https://bun.sh/) installed.
+-   [FFmpeg](https://ffmpeg.org/) installed for sticker and media processing.
+-   PostgreSQL database.
 
-```
-/enablebot
-```
+### Installation
 
-you can disable with
+1.  Clone the repository.
+2.  Install dependencies:
+    ```bash
+    bun install
+    ```
+3.  Configure your credentials:
+    Create a `.env` file and set your `DATABASE_URL` and `GEMINI_API_KEY`.
+    Update `config.ts` with your owner LID.
 
-```
-/disablebot
+4.  Start the bot:
+    ```bash
+    bun run start
+    ```
+
+### Basic Commands
+
+-   `/s` or `/sticker`: Reply to an image/video to make a sticker.
+-   `/smeme`: Create a meme sticker.
+-   `/meme`: Create an image meme.
+-   `/ai`: Chat with Gemini.
+-   `/enablebot`: Enable the bot in a chat.
+
+---
+
+## Deployment
+
+Deploy using PM2 to keep it running 24/7:
+```bash
+bun run deploy
 ```
 
 ---
 
 ## TODO
 
--   [ ] Make it easy to create command with function
--   [ ] Automatically generate menu list
--   [ ] Youtube, instagram, tiktok, any website, downloader
--   [ ] AI Chat bot
--   [ ] Earthquake Notification
 -   [x] Implement PostgreSQL Auth
--   [ ] Create a sticker
--   [ ] RPG
-    -   [ ] Daily
-    -   [ ] Store
-        -   [ ] Sell
-        -   [ ] Buy
-    -   [ ] Fishing
-    -   [ ] Farm
-    -   [ ] Balance
-    -   [ ] Bank
-    -   [ ] Inventory
-        -   [ ] Give item
-        -   [ ] Show item
-    -   [ ] Quest
-    -   [ ] Bank
-        -   [ ] Withdraw
-        -   [ ] Deposit
-    -   [ ] Leaderboard
-    -   [ ] Add balance
-    -   [ ] Work
--   [ ] Admin commands
-    -   [ ] Kick
-    -   [ ] Warn
-    -   [ ] Lockdown
--   [ ] Random commands
-    -   [ ] Cat
-    -   [ ] Dog
-    -   [ ] Car
-    -   [ ] Bunny
-    -   [ ] Lol
-    -   [ ] Idk
-    -   [ ] Meme
-    -   [ ] Facts
-    -   [ ] Kiss
-    -   [ ] Hug
-    -   [ ] AI random
--   [ ] Translate
--   [ ] CI/CD
--   [ ] Bot API
--   [ ] Add more features up to 100++
+-   [x] High-quality Sticker creation (Image/Video)
+-   [x] AI Chat bot integration
+-   [x] Earthquake Notification
+-   [x] Meme & Sticker-Meme generation
+-   [x] Group commands (Kick, Warn, Lockdown)
+-   [x] Automated Menu generation
+-   [ ] Multi-language translation support
+-   [ ] CI/CD Pipeline
 
-## Installation
+---
 
-## Add later :)
+## License
+
+This project is licensed under the MIT License.
