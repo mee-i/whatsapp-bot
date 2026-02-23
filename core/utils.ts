@@ -1,11 +1,15 @@
 export { downloadMediaMessage, getContentType } from "baileys";
 import { downloadMediaMessage, getContentType } from "baileys";
 import type { WASocket, proto } from "baileys";
-import { createWriteStream } from "fs";
+import { createWriteStream, readFileSync, unlinkSync, existsSync, writeFileSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { randomBytes } from "crypto";
+import ff from "fluent-ffmpeg";
+import webp from "node-webpmux";
 import pino from "pino";
+import { Config } from "../config.ts";
+import { store } from "./memory-store.js";
 
 const logger = pino({ level: "silent" });
 
@@ -239,7 +243,6 @@ export const checkGroupAdmin = async (
     const jid = data.key?.remoteJid;
     if (!jid) return false;
 
-    const { store } = require("@core/memory-store");
     const metadata = await store.fetchGroupMetadata(jid, sock);
     if (!metadata) return false;
 
@@ -251,4 +254,92 @@ export const checkGroupAdmin = async (
     return (
         participant?.admin === "superadmin" || participant?.admin === "admin"
     );
+};
+
+/**
+ * Convert image/video to sticker using fluent-ffmpeg
+ */
+export const convertToSticker = async (inputPath: string, isVideo: boolean = false): Promise<Buffer> => {
+    const outputPath = join(tmpdir(), `sticker_${randomBytes(4).toString("hex")}.webp`);
+    
+    await new Promise((resolve, reject) => {
+        const command = ff(inputPath)
+            .on("error", reject)
+            .on("end", () => resolve(true));
+
+        const outputOptions = [
+            "-vcodec", "libwebp",
+            "-vf", "scale='min(512,iw)':min'(512,ih)':force_original_aspect_ratio=decrease,fps=15, pad=512:512:-1:-1:color=white@0.0, split [a][b]; [a] palettegen=reserve_transparent=on:transparency_color=ffffff [p]; [b][p] paletteuse"
+        ];
+        
+        if (isVideo) {
+            outputOptions.push(
+                "-loop", "0",
+                "-ss", "00:00:00",
+                "-t", "00:00:05",
+                "-preset", "default",
+                "-an",
+                "-vsync", "0"
+            );
+        }
+
+        command.addOutputOptions(outputOptions)
+            .toFormat("webp")
+            .save(outputPath);
+    });
+
+    const buffer = readFileSync(outputPath);
+    if (existsSync(outputPath)) unlinkSync(outputPath);
+    return buffer;
+};
+
+/**
+ * Send sticker to JID with optional metadata using node-webpmux
+ * Internally handles converting the media and cleaning up temporary files.
+ */
+export const sendSticker = async (
+    sock: WASocket,
+    jid: string,
+    inputPath: string,
+    options: { packname?: string; author?: string; packId?: string; isVideo?: boolean } = {},
+    quoted?: proto.IWebMessageInfo
+) => {
+    const packname = options.packname || Config.Sticker.packName;
+    const author = options.author || Config.Sticker.publisher;
+    const packId = options.packId || Config.Sticker.packId;
+
+    try {
+        const webpBuffer = await convertToSticker(inputPath, options.isVideo);
+        const tmpPath = join(tmpdir(), `exif_${randomBytes(4).toString("hex")}.webp`);
+        writeFileSync(tmpPath, webpBuffer);
+
+        const img = new webp.Image();
+        await img.load(tmpPath);
+
+    const json = {
+        "sticker-pack-id": packId,
+        "sticker-pack-name": packname,
+        "sticker-pack-publisher": author,
+        "emojis": [""]
+    };
+
+    const exifAttr = Buffer.from([
+        0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00, 
+        0x01, 0x00, 0x41, 0x57, 0x07, 0x00, 0x00, 0x00, 
+        0x00, 0x00, 0x16, 0x00, 0x00, 0x00
+    ]);
+    const jsonBuffer = Buffer.from(JSON.stringify(json), "utf-8");
+    const exif = Buffer.concat([exifAttr, jsonBuffer]);
+    exif.writeUIntLE(jsonBuffer.length, 14, 4);
+
+        img.exif = exif;
+        const finalBuffer = await img.save(null);
+        
+        if (existsSync(tmpPath)) unlinkSync(tmpPath);
+
+        await sock.sendMessage(jid, { sticker: finalBuffer as Buffer }, { quoted: quoted as any });
+    } finally {
+        // Cleanup original downloaded media
+        if (existsSync(inputPath)) unlinkSync(inputPath);
+    }
 };

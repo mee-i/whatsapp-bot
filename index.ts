@@ -12,6 +12,7 @@ import {
 } from "./utilities/earthquake-handler.ts";
 import { startWebhookServer } from "./utilities/webhook-server.ts";
 import figlet from "figlet";
+import { terminal } from "@utilities/terminal.ts";
 
 async function startBot() {
     // Load all modules first
@@ -82,6 +83,12 @@ async function startBot() {
             await MessageEventsHandler(rawdata, sock);
         }
     });
+
+    sock.ev.on("call", async ([ctx]) => {
+        terminal.WarnLog(`[CALL]: from ${ctx.from} id ${ctx.id}, rejecting...`)
+        await sock.rejectCall(ctx.id, ctx.from);
+        // await sock.sendMessage(ctx.from, { text: "Sorry, I can't receive calls." });
+    })
 }
 
 figlet("Miza Bot", (err, data) => {

@@ -48,6 +48,7 @@ function createMemoryStore(): MemoryStore {
         ev.on("groups.update", async (updates) => {
             console.log("[GROUP]: updating group metadata\n");
             for (const update of updates) {
+                console.log(`[GROUP]: update data ${JSON.stringify(update)}`)
                 if (update.id) {
                     const metadata = await fetchGroupMetadata(update.id, sock);
                     groupMetadata.set(update.id, metadata);
@@ -56,10 +57,31 @@ function createMemoryStore(): MemoryStore {
         });
 
         ev.on("group-participants.update", async (update) => {
-            if (update.id) {
-                console.log("[GROUP]: updating participants\n");
-                const metadata = await fetchGroupMetadata(update.id, sock);
-                groupMetadata.set(update.id, metadata);
+            console.log(`[GROUP]: updating group participants ${update.id}\n`)
+            const metadata = groupMetadata.get(update.id);
+            if (!metadata) {
+                const group_meta_data = await fetchGroupMetadata(update.id, sock);
+                groupMetadata.set(update.id, group_meta_data);
+                console.log(`[GROUP]: new metadata ${JSON.stringify(group_meta_data)}`)
+            }
+            else if (metadata) {
+                console.log(metadata)
+                for (const participant of update.participants) {
+                    console.log(`[GROUP]: Updating participant: ${participant.id} in group ${update.id} with action ${update.action} data: ${JSON.stringify(participant)}`);
+                    const index = metadata.participants.findIndex((p: any) => p.id === participant.id);
+                    if (update.action == "promote") {
+                        metadata.participants[index].admin = "admin";
+                    }
+                    else if (update.action == "demote") {
+                        metadata.participants[index].admin = null;
+                    }
+                    else if (update.action == "remove") {
+                        metadata.participants.splice(index, 1);
+                    }
+                    else if (update.action == "add") {
+                        metadata.participants.push({ ...participant });
+                    }
+                }
             }
         });
     };

@@ -8,8 +8,9 @@ export const Config = {
 
     ReadMessage: true,
     Sticker: {
-        packname: "Sticker by MeeI Bot",
-        author: "MeeI Bot",
+        packId: "miza-bot",
+        packName: "Sticker by MeeI Bot",
+        publisher: "MeeI Bot",
     },
 };
 

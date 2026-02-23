@@ -1,6 +1,8 @@
 import { defineCommand } from "@core/menu";
 import { cludz } from "@utils/cludz";
-import fs from "node:fs";
+import fs, { unlinkSync } from "node:fs";
+import { downloadMedia, sendSticker,  } from "@core/utils";
+import { existsSync } from "node:fs";
 
 /**
  * TOOLS
@@ -191,17 +193,17 @@ export const cludzstatus = defineCommand(
 export const meme = defineCommand(
     {
         usage: "${prefix}meme <top> | [bottom]",
-        menu: "Image",
+        menu: "Sticker",
         info: "Generate a meme from an image",
         requireImage: true,
     },
     async ({ reply, args, mediaPath }) => {
         const text = args.join(" ");
-        if (!text) return reply("Please provide text! Format: top | bottom");
+        if (!text) return reply("Please provide text! Format: top | [bottom]");
         
         const parts = text.split("|").map(s => s.trim());
-        const top = parts[0];
-        const bottom = parts[1];
+        const top = parts[0] || "";
+        const bottom = parts[1] || "";
         
         const buffer = fs.readFileSync(mediaPath!);
         const response = await cludz.image.meme(buffer, top, bottom);
@@ -279,6 +281,86 @@ export const crop = defineCommand(
             media: imgBuffer,
             caption: "Cropped image!",
         });
+    }
+);
+
+export const sticker = defineCommand(
+    {
+        usage: "${prefix}sticker [packname] | [author]",
+        menu: "Sticker",
+        info: "Convert image/video to sticker with custom metadata",
+        alias: ["stiker", "s"]
+    },
+    async ({ reply, sock, msg, args }) => {
+        if (!msg?.key?.remoteJid) return;
+
+        // Check for media in current message or quoted message
+        const message = msg.message;
+        const type = Object.keys(message || {})[0];
+        const isQuotedImage = type === "extendedTextMessage" && message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage;
+        const isQuotedVideo = type === "extendedTextMessage" && message?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
+        const isImage = type === "imageMessage";
+        const isVideo = type === "videoMessage";
+
+        if (!isImage && !isVideo && !isQuotedImage && !isQuotedVideo) {
+            return reply("Please reply to an image or video, or send one with the command!");
+        }
+
+        // Get the actual message object (either current or quoted)
+        const mediaMsg = (isQuotedImage || isQuotedVideo) 
+            ? { message: message?.extendedTextMessage?.contextInfo?.quotedMessage, key: msg.key } 
+            : msg;
+
+        const mediaPath = await downloadMedia(mediaMsg as any, sock);
+        if (!mediaPath) return reply("Failed to download media!");
+
+        try {
+            const [packname, author] = args.join(" ").split("|").map(s => s.trim());
+            const isVideoFinal = isVideo || !!isQuotedVideo;
+            
+            await sendSticker(sock, msg.key.remoteJid!, mediaPath, { packname, author, isVideo: isVideoFinal }, msg);
+        } catch (error) {
+            console.error("Sticker conversion error:", error);
+            reply("An error occurred during sticker conversion.");
+            if (mediaPath && existsSync(mediaPath)) unlinkSync(mediaPath);
+        }
+    }
+);
+
+export const smeme = defineCommand(
+    {
+        usage: "${prefix}smeme <top> | [bottom]",
+        menu: "Sticker",
+        info: "Generate a meme sticker from an image",
+        requireImage: true,
+        alias: ["sm", "stikermeme", "stickermeme"]
+    },
+    async ({ reply, sock, msg, args, mediaPath }) => {
+        if (!msg?.key?.remoteJid) return;
+        
+        const text = args.join(" ");
+        if (!text) {
+            if (mediaPath && existsSync(mediaPath)) unlinkSync(mediaPath);
+            return reply("Please provide text! Format: top | [bottom]");
+        }
+        
+        const parts = text.split("|").map(s => s.trim());
+        const top = parts[0] || "";
+        const bottom = parts[1] || "";
+        
+        try {
+            const buffer = fs.readFileSync(mediaPath!);
+            const response = await cludz.image.meme(buffer, top, bottom);
+            const imgBuffer = Buffer.from(await response.arrayBuffer());
+            
+            fs.writeFileSync(mediaPath!, imgBuffer);
+            
+            await sendSticker(sock, msg.key.remoteJid!, mediaPath!, {}, msg);
+        } catch (error) {
+            console.error("Sticker meme error:", error);
+            reply("An error occurred during sticker meme generation.");
+            if (mediaPath && existsSync(mediaPath)) unlinkSync(mediaPath);
+        }
     }
 );
 
