@@ -48,7 +48,7 @@ function createMemoryStore(): MemoryStore {
         ev.on("groups.update", async (updates) => {
             console.log("[GROUP]: updating group metadata\n");
             for (const update of updates) {
-                console.log(`[GROUP]: update data ${JSON.stringify(update)}`)
+                console.log(`[GROUP]: update data ${update.id}`)
                 if (update.id) {
                     const metadata = groupMetadata.get(update.id);
                     groupMetadata.set(update.id, { ...metadata, ...update });
