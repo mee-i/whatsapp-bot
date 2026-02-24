@@ -50,8 +50,8 @@ function createMemoryStore(): MemoryStore {
             for (const update of updates) {
                 console.log(`[GROUP]: update data ${JSON.stringify(update)}`)
                 if (update.id) {
-                    const metadata = await fetchGroupMetadata(update.id, sock);
-                    groupMetadata.set(update.id, metadata);
+                    const metadata = groupMetadata.get(update.id);
+                    groupMetadata.set(update.id, { ...metadata, ...update });
                 }
             }
         });
